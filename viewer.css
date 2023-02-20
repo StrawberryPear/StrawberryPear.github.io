@@ -1,0 +1,323 @@
+@font-face {
+  font-family: tradeWinds;
+  src: url('./assets/trade-winds.ttf');
+}
+:root {
+  --card-width:
+  min(80vw, calc(80vh - 104px) * (269 / 367));
+  --card-height:
+  calc(var(--card-width) * (367 / 269) * 1.03);
+  --offset-top:
+  max(0px, 60vh - calc(var(--card-height)));
+  --nav-height: 48px;
+  --foot-height: 56px;
+}
+body { 
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  background: #091e21;
+  padding-top: calc(var(--nav-height) + 12px);
+  padding-bottom: var(--foot-height);
+
+  font-family: "proxima-nova","Helvetica Neue",Helvetica,Arial,sans-serif;
+  color: #fff;
+}
+cardScroller {
+  display: block;
+  width: 100vw;
+  scroll-snap-type: x mandatory;
+  overflow-x: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  padding-top: var(--offset-top);
+  height: calc(var(--card-height) + 100px);
+}
+body.editing cardScroller {
+  user-select: none;
+  pointer-events: none;
+}
+body:not(.editing) cardList.deck card canvas {
+  pointer-events: none;
+}
+cardScroller.deck > cardList.library, cardScroller.library > cardList.deck {
+  display: none;
+}
+cardScroller::-webkit-scrollbar {
+  display: none;
+}
+cardList {
+  display: inline-flex;
+  padding: 0 50%;
+  height: 100%;
+}
+card {
+  position: relative;
+  width:var(--card-width);
+  height: var(--card-height);
+  display: inline-block;
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-color: black;
+  border-radius: 3.8%;
+  margin: 0 min(2vw, 20px);
+  scroll-snap-align: center;
+}
+body.editing card {
+  pointer-events: all;
+}
+card canvas {
+  position: relative;
+  top:0px;
+  left:0px;
+  width:100%;
+  height: 100%;
+}
+nav {
+  display: flex;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: var(--nav-height);
+  background: #020607;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+call {
+  display: inline-block;
+  position: relative;
+  margin-left: 12px;
+  font-size: 20px;
+  font-family: tradeWinds;
+}
+label.navControl {
+  position: relative;
+  margin-right: 5px;
+  width: 44px;
+  box-sizing: border-box;
+  height:100%;
+  background: url('./assets/addCards.png');
+  background-size: 34px auto;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+label.navControl input {
+  display: none;
+}
+
+cardScroller.library ~ cardControls cardControl.deck,
+cardScroller.deck ~ cardControls cardControl.library,
+cardScroller.library ~ cardTabControls cardControl.deck,
+cardScroller.deck ~ cardTabControls cardControl.library,
+body.editing cardTabControls cardControl.deck,
+body:not(.editing) cardTabControls cardControl.editing {
+  display: none;
+}
+
+cardTabControls {
+  display: flex;
+  position: absolute;
+  top: calc(var(--offset-top) + 89px);
+  left: calc(50vw + var(--card-width) * 0.5 - min(6.5vh, 80px) + 34px);
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  /* pointer-events: none; */
+}
+cardTabControls cardControl {
+  position: relative;
+  width: min(6.5vh, 80px);
+  height: min(6.5vh, 80px);
+  margin-bottom: 12px;
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url('./assets/controlBack.png');
+}
+
+cardTabControls cardControl::before {
+  content:'';
+  display:block;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  right: 0px;
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+cardTabControls cardControl.edit::before {
+  background-image: url('./assets/edit.png');
+  background-size: 60%;
+}
+cardTabControls cardControl.end::before {
+  background-image: url('./assets/end.png');
+}
+cardTabControls cardControl.erase {
+  margin-bottom: 32px;
+}
+cardTabControls cardControl.erase::before {
+  background-image: url('./assets/erase.png');
+  background-size: 60%;
+}
+cardTabControls cardControl.shiftUp::before {
+  background-image: url('./assets/left.png');
+}
+cardTabControls cardControl.shiftDown::before {
+  background-image: url('./assets/right.png');
+}
+
+
+cardControls {
+  display: inline-block;
+  position: absolute;
+  text-align: center;
+  top: calc(var(--nav-height) + var(--card-height) + var(--offset-top) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+cardControls cardControl {
+  display: flex;
+  background: url(./assets/add-remove.png);
+  height: min(128px, 17vh);
+  width: min(128px, 17vh);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-sizing: border-box;
+  align-content: flex-end;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 12.5% 12.5%;
+  font-family: 'tradeWinds';
+  font-size: min(16px, calc(8px + 1vh));
+}
+cardControls cardControl::before {
+  content:'+';
+  position: absolute;
+  top:35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 64px;
+}
+
+cardControls cardControl.removeFromDeck::before {
+  content:'-';
+}
+
+foot {
+  position: fixed;
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: var(--foot-height);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+foot cardControl {
+  display: inline-block;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  background: #020607;
+  font-family: 'tradeWinds';
+}
+cardScroller.library ~ foot cardControl.showLibrary, 
+cardScroller.deck ~ foot cardControl.showDeck {
+    background: #0206072F;
+}
+
+empty {
+  display: block;
+  position: relative;
+  padding: 40px;
+}
+emptyMedalion {
+  width: 100%;
+  padding-top: 100%;
+  display: block;
+  background: url('./assets/addCards.png');
+  background-size: min(100%, 200px);
+  background-position: center;
+  background-repeat: no-repeat;
+}
+empty a {
+  color: #fff;
+}
+toast {
+  position: absolute;
+  top: 50%;
+  height: min(128px, 17vh);
+  width: calc(min(128px, 17vh) * 3);
+  left:  50%;
+  transform: translate(-50%, -50%);
+  background: url('./assets/toastBack.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  user-select: none;
+  font-family: 'tradeWinds';
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+}
+
+body.empty cardScroller, 
+body.empty cardTabControls, 
+body.empty cardControls, 
+body.empty foot,
+body:not(.empty) empty {
+  display: none;
+}
+body.loading cardScroller, 
+body.loading cardTabControls, 
+body.loading cardControls, 
+body.loading foot,
+body.loading empty {
+  display: none;
+}
+
+body:not(.loading) loading {
+  display: none;
+}
+
+@keyframes loadingSpin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+loading {
+  display: block;
+  position: absolute;
+  top:50%;
+  left: 50%;
+  width: 35vw;
+  height: 35vw;
+  
+  animation: loadingSpin 3s infinite linear;
+  border-radius: 50%;
+  border: 12px solid #0000;
+  border-top-color: #fff;
+  border-bottom-color: #fff1;
+}

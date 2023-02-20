@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <title>Relicblade Deck Builder</title>
+
+    <link rel="stylesheet" type="text/css" href="viewer.css">
+
+    <script src="../../node_modules/pdfjs-dist/build/pdf.js"></script>
+    <script src="../../node_modules/idb/build/umd.js"></script>
+  </head>
+
+  <body class="loading">
+    <nav>
+      <call>Deck Builder</call>
+      <label class="navControl"><input id="fileUpload" type='file' /></label>
+    </nav>
+
+    <cardScroller class="library">
+      <cardList class="library">
+      </cardList>
+      <cardList class="deck">
+      </cardList>
+    </cardScroller>
+
+    <cardTabControls>
+      <cardControl class="editing end"></cardControl>
+
+      <cardControl class="deck edit"></cardControl>
+      <cardControl class="deck erase"></cardControl>
+
+      <cardControl class="deck shiftUp"></cardControl>
+      <cardControl class="deck shiftDown"></cardControl>
+    </cardTabControls>
+
+    <cardControls>
+      <cardControl class="deck removeFromDeck">Remove from Deck</cardControl>
+      <cardControl class="library addToDeck">Add to Deck</cardControl>
+    </cardControls>
+
+    <toast></toast>
+
+    <foot>
+      <cardControl class="showLibrary">Library</cardControl>
+      <cardControl class="showDeck">Deck</cardControl>
+    </foot>
+    
+    <empty>
+      <emptyMedalion></emptyMedalion>
+      <emptyText>To use this app, you have to hit the add cardset button, and import a relicblade card pdf. You can find these pdfs for sale at <a href="https://relicblade.com/shop?category=Digital+Download">Relicblade.com</a>.</emptyText>
+    </empty>
+
+    <loading>
+    </loading>
+    <script src="./viewer.js"></script>
+  </body>
+</html>
