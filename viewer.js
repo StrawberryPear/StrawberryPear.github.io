@@ -2,7 +2,7 @@ const CARD_WIDTH = 269;
 const CARD_HEIGHT = 367;
 
 var PDFJS = window['pdfjs-dist/build/pdf'];
-PDFJS.GlobalWorkerOptions.workerSrc = '../../node_modules/pdfjs-dist/build/pdf.worker.js';
+PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 
 var database;
 var deck = [];
@@ -39,7 +39,6 @@ const loadCardImagesFromUrl = (() => {
       }
     })();
 
-    debugger;
     const pdf = await loadingTask.promise;
 
     var totalPages = pdf.numPages
