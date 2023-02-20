@@ -106,6 +106,7 @@ const loadCard = (card) => {
   cardLibraryListEle.append(cardEle);
 
   cardEle.setAttribute("uid", card.uid);
+  cardEle.setAttribute("index", card.index);
 
   cardEle.style.setProperty("background-image", `url('${card.image}')`);
 };
@@ -121,8 +122,6 @@ const addCardToDatabase = async (image) => {
     const storeId = await objectStore.add({uid: image.substr(8000, 64), image});
 
     const result = await objectStore.get(storeId);
-
-    console.log(result.uid, result.index);
 
     loadCard(result);
     
@@ -388,9 +387,24 @@ const init = async () => {
 
   document.querySelector("cardControl.end").addEventListener("click", () => {
     document.body.className = "";
-    
+  });
+
+  document.querySelector("cardControl.destroy").addEventListener("click", async () => {
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
+    
+    const confirmValue = confirm("Are you sure you want to remove this card from your library?");
+    if (!confirmValue) return;
+
+    // remove it from the library.
+    const transaction = database.transaction(['cards'], 'readwrite');
+    const objectStore = transaction.objectStore('cards');
+
+    const index = parseInt(currentCardEle.getAttribute("index"))
+
+    await objectStore.delete(index);
+
+    currentCardEle.remove();
   });
 };
 

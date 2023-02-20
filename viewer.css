@@ -172,6 +172,9 @@ cardTabControls cardControl.shiftUp::before {
 cardTabControls cardControl.shiftDown::before {
   background-image: url('./assets/right.png');
 }
+cardTabControls cardControl.destroy::before {
+  background-image: url('./assets/destroy.png');
+}
 
 
 cardControls {
