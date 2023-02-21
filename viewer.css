@@ -64,6 +64,9 @@ card {
   margin: 0 min(2vw, 20px);
   scroll-snap-align: center;
 }
+card.inactive {
+  display: none;
+}
 body.editing card {
   pointer-events: all;
 }
@@ -138,7 +141,6 @@ cardTabControls cardControl {
   background-position: center;
   background-image: url('./assets/controlBack.png');
 }
-
 cardTabControls cardControl::before {
   content:'';
   display:block;
@@ -179,22 +181,60 @@ cardTabControls cardControl.destroy::before {
   background-image: url('./assets/destroy.png');
 }
 
-cardTabControls cardControl.filterUpgrade::before {
-  background-image: url('./assets/upgrade.png');
+cardTabControls cardControl.filterAdvocate::before,
+cardTabControls cardControl.filterAdversary::before,
+cardTabControls cardControl.filterNeutral::before,
+cardTabControls cardControl.filterUpgrade::before,
+cardTabControls cardControl.filterRelic::before {
+  content: 'U';
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'tradeWinds';
+  font-size: 20px;
+  padding-top: 4px;
+}
+cardControl.filterAdvocate,
+cardControl.filterAdversary,
+cardControl.filterNeutral,
+cardControl.filterUpgrade,
+cardControl.filterRelic {
+    filter: contrast(0.75) invert(1);
+}
+cardControl.inactive {
+  filter: contrast(0.55);
+}
+
+cardTabControls cardControl.filterAdvocate::before {
+  content: 'G';
+}
+cardTabControls cardControl.filterAdversary::before {
+  content: 'E';
+}
+cardTabControls cardControl.filterNeutral::before {
+  content: 'N';
+}
+cardTabControls cardControl.filterRelic::before {
+  content: 'R';
 }
 
 
 cardControls {
-  display: inline-block;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  
   position: absolute;
   text-align: center;
   top: calc(var(--nav-height) + var(--card-height) + var(--offset-top) + 20px);
   left: 50%;
   transform: translateX(-50%);
+  width: 100%;
 }
 
 cardControls cardControl {
+  position: relative;
   display: flex;
+  grid-column: 2;
   background: url(./assets/add-remove.png);
   height: min(128px, 17vh);
   width: min(128px, 17vh);
@@ -205,7 +245,7 @@ cardControls cardControl {
   align-content: flex-end;
   justify-content: center;
   align-items: flex-end;
-  padding: 12.5% 12.5%;
+  padding: calc(min(128px, 17vh) * 0.12);
   font-family: 'tradeWinds';
   font-size: min(16px, calc(8px + 1vh));
 }
@@ -220,6 +260,33 @@ cardControls cardControl::before {
 
 cardControls cardControl.removeFromDeck::before {
   content:'-';
+}
+cardControls.searched cardControl.search,
+cardControls:not(.searched) cardControl.clearSearch {
+  display: none;
+}
+cardControls cardControl.search {
+  grid-column: 3;
+}
+cardControls cardControl.search::before {
+  content:'';
+  position: absolute;
+  top:35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 64px;
+}
+
+cardControls cardControl.clearSearch::before {
+  content:'';
+  position: absolute;
+  top:35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 64px;
+}
+cardControls cardControl.clearSearch {
+  grid-column: 3;
 }
 
 foot {

@@ -14,7 +14,17 @@ PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 var database;
 var deck = [];
 
-const loadCardImagesFromUrl = (() => {
+const updateDeck = () => {
+  // work out total points in deck :D
+  const cards = deck.map(id => store[id]);
+  const cost = cards.reduce((sum, card) => card ? sum + (parseInt(card.match(/\d+/)) || 0) : sum, 0);
+
+  const deckCostEle = document.getElementById('points');
+
+  deckCostEle.innerHTML = cost ? `&nbsp;(${cost})` : "";
+}
+
+const loadCardDataFromUrl = (() => {
   const loadingCanvas = document.createElement('canvas');
 
   const CARD_ROWS = 3;
@@ -83,6 +93,7 @@ const loadCardImagesFromUrl = (() => {
     })();
 
     const pdf = await loadingTask.promise;
+    const metaData = await pdf.getMetadata();
 
     var totalPages = pdf.numPages
     var data = [];
@@ -90,6 +101,8 @@ const loadCardImagesFromUrl = (() => {
     for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
       const page = await pdf.getPage(pageNumber);
       
+      const text = await page.getTextContent();
+
       var viewport = page.getViewport({ scale: SCALE });
 
       // Prepare canvas using PDF page dimensions
@@ -113,16 +126,17 @@ const loadCardImagesFromUrl = (() => {
       });
     }
 
-    return cardImages;
+    return [cardImages, metaData.info.Title];
   }
 })();
 
 const cardScrollerEle = document.querySelector("cardScroller");
 const cardLibraryListEle = document.querySelector("cardList.library");
 const cardDeckListEle = document.querySelector("cardList.deck");
+const cardControlsEle = document.querySelector("cardControls");
 
 const loadCardsFromUrl = async (url) => {
-  const images = await loadCardImagesFromUrl(url);
+  const [images, title] = await loadCardDataFromUrl(url);
 
   var cardsLoaded = 0;
 
@@ -131,7 +145,7 @@ const loadCardsFromUrl = async (url) => {
 
     if (image.length < 8064) continue;
 
-    await addCardToDatabase(image);
+    await addCardToDatabase(image, `${title} - ${cardsLoaded}`);
   
     cardsLoaded++;
   }
@@ -149,12 +163,12 @@ const loadCard = (card) => {
   cardEle.style.setProperty("background-image", `url('${card.image}')`);
 };
 
-const addCardToDatabase = async (image) => {
+const addCardToDatabase = async (image, uid) => {
   const transaction = database.transaction('cards', 'readwrite');
 
   try {
     const objectStore = transaction.objectStore('cards');
-    const storeId = await objectStore.add({uid: image.substr(8000, 64), image});
+    const storeId = await objectStore.add({uid, image});
 
     const result = await objectStore.get(storeId);
 
@@ -200,8 +214,11 @@ const showToast = (() => {
 
 // initialize the database.
 const init = async () => {
-  database = await idb.openDB('relicbladeCards', 1, {
-    upgrade: db => {
+  database = await idb.openDB('relicbladeCards', 2, {
+    upgrade: (db, oldVersion) => {
+      if (oldVersion == 1) {
+        db.deleteObjectStore('cards');
+      }
       const cardObjectStore = db.createObjectStore('cards', { keyPath: 'index', autoIncrement: true }); 
 
       cardObjectStore.createIndex("uid", "uid", { unique: true });
@@ -222,10 +239,12 @@ const init = async () => {
 
   fileUploadEle.addEventListener("change", (event) => {
     try {
-      let [file] = event.target.files;
-      if (!file) return;
-
       document.body.className = "loading";
+
+      let [file] = event.target.files;
+      if (!file) {
+        document.body.className = "";
+      };
 
       const reader = new FileReader();
       reader.onloadend = async () => {
@@ -242,7 +261,10 @@ const init = async () => {
     }
   });
 
-  deck = (localStorage.getItem("deck") || "").split(',');
+  deck = (localStorage.getItem("deck") || "")
+    .split(',')
+    .filter(v => v && cards.find(card => card.uid == v));
+  updateDeck();
   const initialLibraryCardEles = [...cardLibraryListEle.children];
 
   for (const cardId of deck) {
@@ -272,6 +294,7 @@ const init = async () => {
 
       deck.splice(currentCardIndex, 1);
       localStorage.setItem("deck", deck);
+      updateDeck();
 
       showToast(`Card removed from deck`);
       currentCardEle.remove();
@@ -285,6 +308,7 @@ const init = async () => {
 
       cardDeckListEle.append(cardEleClone);
       deck.push(currentCardEle.getAttribute("uid"));
+      updateDeck();
 
       showToast(`Card added to deck`);
       localStorage.setItem("deck", deck);
@@ -406,7 +430,7 @@ const init = async () => {
 
       e.preventDefault();
     }, false);
-  }
+  };
 
   document.querySelector("cardControl.edit").addEventListener("click", () => {
     document.body.setAttribute("drawType", "draw");
@@ -422,6 +446,99 @@ const init = async () => {
 
   document.querySelector("cardControl.end").addEventListener("click", () => {
     document.body.className = "";
+  });
+
+  const filterAdvocateEle = document.querySelector("cardControl.filterAdvocate");
+  const filterAdversaryEle = document.querySelector("cardControl.filterAdversary");
+  const filterNeutralEle = document.querySelector("cardControl.filterNeutral");
+  const filterUpgradeEle = document.querySelector("cardControl.filterUpgrade");
+  const filterRelicEle = document.querySelector("cardControl.filterRelic");
+
+  var searchText = "";
+  const filters = {
+    advocate: {
+      ele: filterAdvocateEle,
+      filter: /advocate/i,
+      active: false
+    },
+    adversary: {
+      ele: filterAdversaryEle,
+      filter: /adversary/i,
+      active: false
+    },
+    neutral: {
+      ele: filterNeutralEle,
+      filter: /neutral/i,
+      active: false
+    },
+    upgrade: {
+      ele: filterUpgradeEle,
+      filter: /upgrade/i,
+      active: false
+    },
+    relic: {
+      ele: filterRelicEle,
+      filter: /relic/i,
+      active: false
+    }
+  };
+
+  const applyFilters = () => {
+    const allFalse = !Object.values(filters).find(o => o.active);
+
+    const libraryCardEles = [...cardLibraryListEle.querySelectorAll('card')];
+
+    for (const cardEle of libraryCardEles) {
+      const uid = cardEle.getAttribute("uid");
+      const storeItem = store[uid];
+
+      if (!storeItem) {
+        cardEle.classList.toggle('inactive', !allFalse || !!searchText.trim());
+
+        continue;
+      }
+
+      const filterShow = Object.values(filters).find(o => {
+        return o.active && storeItem.match(o.filter);
+      });
+
+      const searchShow = storeItem.toLowerCase().includes(searchText.toLowerCase());
+
+      cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow);
+    }
+    window.requestAnimationFrame(() => {
+      cardScrollerEle.scrollTo(0, 0);
+    });
+  }
+
+  Object.keys(filters)
+    .forEach(key => {
+      const object = filters[key];
+      object.ele.addEventListener("click", () => {
+        const startsInactive = object.ele.classList.contains('inactive');
+        object.ele.classList.toggle('inactive');
+    
+        const isActive = !!startsInactive;
+        object.active = isActive;
+        
+        applyFilters();
+      });
+    });
+
+  document.querySelector("cardControl.search").addEventListener("click", async () => {
+    searchText = prompt("Cards to search for (eg, dodge, spell): ");
+
+    applyFilters();
+
+    cardControlsEle.className = "searched";
+  });
+  document.querySelector("cardControl.clearSearch").addEventListener("click", async () => {
+    // apply search within filters?
+    searchText = "";
+
+    applyFilters();
+
+    cardControlsEle.className = "";
   });
 
   document.querySelector("cardControl.destroy").addEventListener("click", async () => {

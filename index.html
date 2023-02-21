@@ -46,13 +46,15 @@
     <cardControls>
       <cardControl class="deck removeFromDeck">Remove from Deck</cardControl>
       <cardControl class="library addToDeck">Add to Deck</cardControl>
+      <cardControl class="library search">Search</cardControl>
+      <cardControl class="library clearSearch">Clear Search</cardControl>
     </cardControls>
 
     <toast></toast>
 
     <foot>
       <cardControl class="showLibrary">Library</cardControl>
-      <cardControl class="showDeck">Deck</cardControl>
+      <cardControl class="showDeck">Deck <span id="points"></span></cardControl>
     </foot>
     
     <empty>
@@ -62,6 +64,7 @@
 
     <loading>
     </loading>
+    <script src="./store.js"></script>
     <script src="./viewer.js"></script>
   </body>
 </html>
