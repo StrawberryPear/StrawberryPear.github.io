@@ -1,5 +1,12 @@
-const CARD_WIDTH = 269;
-const CARD_HEIGHT = 367;
+const SCALE = 1.5;
+
+const CARD_WIDTH = Math.round(179.333333 * SCALE);
+const CARD_HEIGHT = Math.round(244.666667 * SCALE);
+
+const CARD_OFFSET_X = Math.round(36.6666666667 * SCALE);
+const CARD_OFFSET_Y = Math.round(18.6666666667 * SCALE);
+
+const CARD_ROW_OFFSET = Math.round(6.66666666667 * SCALE);
 
 var PDFJS = window['pdfjs-dist/build/pdf'];
 PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
@@ -13,9 +20,6 @@ const loadCardImagesFromUrl = (() => {
   const CARD_ROWS = 3;
   const CARD_COLS = 3;
   const CARD_PER_PAGE = CARD_ROWS * CARD_COLS;
-
-  const CARD_OFFSET_X = 55;
-  const CARD_OFFSET_Y = 28;
 
   const CARD_ROW_OFFSET = 10;
 
@@ -86,8 +90,7 @@ const loadCardImagesFromUrl = (() => {
     for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
       const page = await pdf.getPage(pageNumber);
       
-      var scale = 1.5;
-      var viewport = page.getViewport({ scale: scale });
+      var viewport = page.getViewport({ scale: SCALE });
 
       // Prepare canvas using PDF page dimensions
       var context = loadingCanvas.getContext('2d');
