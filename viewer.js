@@ -35,6 +35,45 @@ const loadCardImagesFromUrl = (() => {
 
         saveContext.drawImage(originCanvas, x, y, w, h, 0, 0, w, h);
 
+        // check if it has a border most of the way around, at least 90%.
+        const imageData = saveContext.getImageData(0, 0, w, h);
+        const pixelData = imageData.data;
+
+        var blackCount = 0;
+
+        const bottomOffset = (h - 1) * w * 4;
+        const rightOffset = (w - 1) * 4;
+
+        for (var xi = 0; xi < w; xi++) {
+          const ri = xi * 4;
+          const gi = xi * 4 + 1;
+          const bi = xi * 4 + 2;
+
+          const topPixel = pixelData[ri] + pixelData[gi] + pixelData[bi];
+          const bottomPixel = pixelData[bottomOffset + ri] + pixelData[bottomOffset + gi] + pixelData[bottomOffset + bi];
+          
+          blackCount += topPixel + bottomPixel;
+        }
+        
+        for (var yi = 0; yi < h; yi++) {
+          const oi = yi * 4 * w;
+
+          const ri = oi;
+          const gi = oi + 1;
+          const bi = oi + 2;
+
+          const leftPixel = pixelData[ri] + pixelData[gi] + pixelData[bi];
+          const rightPixel = pixelData[rightOffset + ri] + pixelData[rightOffset + gi] + pixelData[rightOffset + bi];
+
+          blackCount += leftPixel + rightPixel;
+        }
+        
+        const MAX_PIXEL_VALUE = (w * 2 + h * 2) * 3 * 255;
+
+        if (blackCount > MAX_PIXEL_VALUE * 0.05) {
+          return "";
+        }
+
         return saveCanvas.toDataURL();
       }
     })();
@@ -86,22 +125,18 @@ const loadCardsFromUrl = async (url) => {
 
   for (const imageIndex in images) {
     const image = images[imageIndex];
-    const card = await addCardToDatabase(image);
 
-    if (card) continue;
+    if (image.length < 8064) continue;
 
-    loadCard(card);
-
+    await addCardToDatabase(image);
+  
     cardsLoaded++;
   }
-
   
   showToast(`${cardsLoaded} cards added to library`);
 };
 
 const loadCard = (card) => {
-  if ((card?.image?.length ?? 0) < 8000) return false;
-
   const cardEle = document.createElement("card");
   cardLibraryListEle.append(cardEle);
 
@@ -112,9 +147,6 @@ const loadCard = (card) => {
 };
 
 const addCardToDatabase = async (image) => {
-  // check if it's in there...
-  if (image.length < 8064) return false;
-
   const transaction = database.transaction('cards', 'readwrite');
 
   try {
@@ -404,6 +436,7 @@ const init = async () => {
 
     await objectStore.delete(index);
 
+    showToast("Card Removed");
     currentCardEle.remove();
   });
 };
