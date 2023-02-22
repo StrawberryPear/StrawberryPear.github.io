@@ -81,6 +81,17 @@ const applyFilters = () => {
   window.requestAnimationFrame(() => {
     cardScrollerEle.scrollTo(0, 0);
   });
+
+  // check purchases
+  for (const purchaseEle of [...libraryCardEles.filter(ele => ele.tagName == "PURCHASE")]) {
+    const uid = purchaseEle.getAttribute("uid").toLowerCase();
+
+    const hasCardsMatching = libraryCardEles
+      .filter(ele => ele.tagName == "CARD")
+      .find(cardEle => (cardEle.getAttribute("uid") || "").toLowerCase().includes(uid));
+
+    purchaseEle.classList.toggle("bought", !!hasCardsMatching);
+  }
 }
 
 const updateDeck = () => {
@@ -308,11 +319,11 @@ const addCardToDatabase = async (image, uid) => {
   }
 };
 
-const getCurrentCardEle = () => {
+const getCurrentCardEle = (canBePurchase) => {
   const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
-  const cardEle = pointEles.find(ele => ele.tagName == 'CARD');
+  const cardEle = pointEles.find(ele => ["CARD", "PURCHASE", "IMPORT"].includes(ele.tagName));
 
-  if (cardEle?.tagName == 'CARD') {
+  if (cardEle?.tagName == 'CARD' || (canBePurchase && ["PURCHASE", "IMPORT"].includes(cardEle?.tagName))) {
     return cardEle;
   }
 };
@@ -363,35 +374,35 @@ const init = async () => {
 
   document.body.className = cards.length ? '' : 'empty';
 
-  document.querySelector('label.menuControl.fileUpload').addEventListener('click', event => {
+  [...document.querySelectorAll('label.fileUpload')].map(ele => ele.addEventListener('click', event => {
     overlayMenuEle.className = 'hidden';
-    document.body.className = 'loading';
-  });
+  }));
 
-  const fileUploadEle = document.getElementById('fileUpload');
-  fileUploadEle.addEventListener('change', (event) => {
-    try {
-
-      let [file] = event.target.files;
-      if (!file) {
-        document.body.className = '';
-      };
-
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          await loadCardsFromUrl(reader.result);
-
-          applyFilters();
-        } finally {
+  [...document.querySelectorAll('input[type="file"]')].map(ele => {
+    ele.addEventListener('change', (event) => {
+      document.body.className = 'loading';
+      try {
+        let [file] = event.target.files;
+        if (!file) {
           document.body.className = '';
+        };
+
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          try {
+            await loadCardsFromUrl(reader.result);
+
+            applyFilters();
+          } finally {
+            document.body.className = '';
+          }
         }
+        reader.readAsDataURL(file)
+      } catch (error) {
+        console.error(error);
+        alert('Something failed... Sorry.')
       }
-      reader.readAsDataURL(file)
-    } catch (error) {
-      console.error(error);
-      alert('Something failed... Sorry.')
-    }
+    })
   });
 
   // inital deck production
@@ -421,26 +432,26 @@ const init = async () => {
     document.body.className = '';
 
     if (cardScroller.className !== 'deck') return;
-    const currentCard = getCurrentCardEle();
+    const currentCard = getCurrentCardEle(true);
 
     deckFocusCard = currentCard;
 
     // scroll to the last library focused' card
     cardScroller.className = 'library';
 
-    const cardScrollX = libraryFocusCard.offsetLeft;
+    const cardScrollX = libraryFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
   });
   document.querySelector('cardControl.showDeck').addEventListener('click', () => {
     if (cardScroller.className !== 'library') return;
-    const currentCard = getCurrentCardEle();
+    const currentCard = getCurrentCardEle(true);
 
     libraryFocusCard = currentCard;
 
     // scroll to the last library focused' card
     cardScroller.className = 'deck';
 
-    const cardScrollX = deckFocusCard.offsetLeft;
+    const cardScrollX = deckFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
   });
 
@@ -504,6 +515,18 @@ const init = async () => {
     localStorage.setItem('deck', deck);
     
     cardDeckListEle.insertBefore(nextCardEle, currentCardEle);
+  });
+  document.querySelector("cardScroller").addEventListener('click', () => {
+    const currentCardEle = getCurrentCardEle(true);
+    if (!currentCardEle) return;
+
+    switch (currentCardEle.tagName) {
+      case "PURCHASE":
+        if (!currentCardEle.classList.contains("bought")) {
+          window.open("https://relicblade.com/shop?category=Cards");
+        }
+        break;
+    }
   });
 
   const handleEdit = () => {

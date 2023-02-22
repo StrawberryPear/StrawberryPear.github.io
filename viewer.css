@@ -51,7 +51,7 @@ cardList {
   padding: 0 50%;
   height: 100%;
 }
-card, purchase {
+card, purchase, import {
   position: relative;
   width:var(--card-width);
   height: var(--card-height);
@@ -64,10 +64,81 @@ card, purchase {
   margin: 0 min(2vw, 20px);
   scroll-snap-align: center;
 }
-purchase {
+purchase, import {
   height:var(--card-width);
   border-radius: 0;
   margin-top: calc((var(--card-height) - var(--card-width)) * 0.25);
+}
+purchase label, import label, purchase.bought::after {
+  position: absolute;
+  bottom: 10%;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 24px;
+  background: rgba(0,0,0,0.9);
+  font-family: 'tradeWinds';
+  text-align: center;
+  font-size: 20px;
+}
+purchase.bought label {
+  display: none;
+}
+purchase.bought::after {
+  content: 'Already Owned';
+}
+import {
+  background-image: url('./assets/cardpacks/import.jpg');
+}
+purchase[uid="Lostwood Enclave"] {
+  background-image: url('./assets/cardpacks/Lostwood-Enclave-Faction-Set.jpg');
+}
+purchase[uid="Temple of Justice"] {
+  background-image: url('./assets/cardpacks/Temple-of-Justice-Faction-Set.jpg');
+}
+purchase[uid="Battle Pigs"] {
+  background-image: url('./assets/cardpacks/Battle-Pig-Faction-Set.jpg');
+}
+purchase[uid="Adventurer Gear"] {
+  background-image: url('./assets/cardpacks/Adventure-Gear.jpg');
+}
+purchase[uid="The Lone Guard"] {
+  background-image: url('./assets/cardpacks/Lone-Guard-Faction-Set.jpg');
+}
+purchase[uid="Bone and Darkness"] {
+  background-image: url('./assets/cardpacks/Bone-and-Darkness-Faction-Set.jpg');
+}
+purchase[uid="The Wilderkin"] {
+  background-image: url('./assets/cardpacks/Wilderkin-Faction-Set.jpg');
+}
+purchase[uid="Wretched Hive"] {
+  background-image: url('./assets/cardpacks/Wretched-Hive-Faction-Set.jpg');
+}
+purchase[uid="Moldorf Expedition"] {
+  background-image: url('./assets/cardpacks/moldorf-expedition-faction-set.jpg');
+}
+purchase[uid="Apostels of the Deep"] {
+  background-image: url('./assets/cardpacks/apostels-of-the-deep.jpg');
+}
+purchase[uid="Kingdoms of Akadh"] {
+  background-image: url('./assets/cardpacks/Kingdoms-of-Akadhk.jpeg');
+}
+purchase[uid="Relics of the Volge"] {
+  background-image: url('./assets/cardpacks/Relics-of-the-volge.jpg');
+}
+purchase[uid="Storms of Kural"] {
+  background-image: url('./assets/cardpacks/Storms-of-Kural.jpg');
+}
+purchase[uid="Singular Champions 1"] {
+  background-image: url('./assets/cardpacks/Singular-Champions-1.jpg');
+}
+purchase[uid="Singular Champions 2"] {
+  background-image: url('./assets/cardpacks/Singular-Champions-2.jpg');
+}
+purchase[uid="Singular Champions 3"] {
+  background-image: url('./assets/cardpacks/Singular-Champions-3.jpg');
+}
+purchase[uid="Singular Champions 4"] {
+  background-image: url('./assets/cardpacks/Singular-Champions-4.jpg');
 }
 card.inactive, purchase.inactive {
   display: none;
@@ -155,7 +226,6 @@ cardTabControls cardControl::before {
   background-repeat: no-repeat;
   background-position: center;
 }
-
 cardTabControls cardControl.edit {
   margin-top: 32px;
 }
@@ -328,22 +398,41 @@ cardScroller.deck ~ foot cardControl.showDeck {
     background: #0206072F;
 }
 
-empty {
-  display: block;
+helpOverlay {
+  display: flex;
   position: relative;
-  padding: 40px;
-}
-emptyMedalion {
+  position: fixed;
+  top: 0px;
+  left: 0px;
   width: 100%;
-  padding-top: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  opacity: 1;
+  transition: opacity 0.2s;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+helpMedalion {
+  width: 50%;
+  padding-top: 50%;
   display: block;
-  background: url('./assets/addCards.png');
+  background: url('./assets/ham.png');
   background-size: min(100%, 200px);
   background-position: center;
   background-repeat: no-repeat;
+  margin-bottom: 32px;
 }
-empty a {
+helpOverlay a {
   color: #fff;
+}
+helpOverlay.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 toast {
   position: absolute;
@@ -366,14 +455,6 @@ toast {
   justify-content: center;
   align-items: center;
   font-size: 24px;
-}
-
-body.empty cardScroller, 
-body.empty cardTabControls, 
-body.empty cardControls, 
-body.empty foot,
-body:not(.empty) empty {
-  display: none;
 }
 
 @keyframes loadingSpin {
