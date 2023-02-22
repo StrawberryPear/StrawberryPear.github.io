@@ -3,12 +3,9 @@
   src: url('./assets/trade-winds.ttf');
 }
 :root {
-  --card-width:
-  min(80vw, calc(80vh - 104px) * (269 / 367));
-  --card-height:
-  calc(var(--card-width) * (367 / 269) * 1.03);
-  --offset-top:
-  max(0px, 60vh - calc(var(--card-height)));
+  --card-width: min(80vw, calc(80vh - 104px) * (269 / 367));
+  --card-height: calc(var(--card-width) * (367 / 269) * 1.03);
+  --offset-top: max(0px, 60vh - calc(var(--card-height)));
   --nav-height: 48px;
   --foot-height: 56px;
 }
@@ -325,10 +322,11 @@ cardControls cardControl {
   box-sizing: border-box;
   align-content: flex-end;
   justify-content: center;
-  align-items: flex-end;
   padding: calc(min(128px, 17vh) * 0.12);
   font-family: 'tradeWinds';
   font-size: min(16px, calc(8px + 1vh));
+  align-items: center;
+  padding-top: 67px;
 }
 cardControls cardControl::before {
   content:'+';
@@ -349,22 +347,23 @@ cardControls:not(.searched) cardControl.clearSearch {
 cardControls cardControl.search {
   grid-column: 3;
 }
-cardControls cardControl.search::before {
-  content:'';
-  position: absolute;
-  top:35%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 64px;
-}
-
+cardControls cardControl.search::before,
 cardControls cardControl.clearSearch::before {
   content:'';
   position: absolute;
-  top:35%;
+  top: 31%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 64px;
+  width: 50%;
+  height: 50%;
+  background: url('./assets/search.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+cardControls cardControl.clearSearch::before {
+  background-image: url('./assets/searchCancel.png');
 }
 cardControls cardControl.clearSearch {
   grid-column: 3;
