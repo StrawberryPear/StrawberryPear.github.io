@@ -308,6 +308,8 @@ const init = async () => {
       reader.onloadend = async () => {
         try {
           await loadCardsFromUrl(reader.result);
+
+          applyFilters();
         } finally {
           document.body.className = "";
         }
