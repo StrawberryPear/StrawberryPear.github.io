@@ -51,7 +51,7 @@ cardList {
   padding: 0 50%;
   height: 100%;
 }
-card {
+card, purchase {
   position: relative;
   width:var(--card-width);
   height: var(--card-height);
@@ -64,7 +64,12 @@ card {
   margin: 0 min(2vw, 20px);
   scroll-snap-align: center;
 }
-card.inactive {
+purchase {
+  height:var(--card-width);
+  border-radius: 0;
+  margin-top: calc((var(--card-height) - var(--card-width)) * 0.25);
+}
+card.inactive, purchase.inactive {
   display: none;
 }
 body.editing card {
@@ -97,19 +102,16 @@ call {
   font-size: 20px;
   font-family: tradeWinds;
 }
-label.navControl {
+ham {
   position: relative;
   margin-right: 5px;
   width: 44px;
   box-sizing: border-box;
   height:100%;
-  background: url('./assets/addCards.png');
+  background: url('./assets/ham.png');
   background-size: 34px auto;
   background-position: center;
   background-repeat: no-repeat;
-}
-label.navControl input {
-  display: none;
 }
 
 cardScroller.library ~ cardControls cardControl.deck,
@@ -124,8 +126,8 @@ body:not(.editing) cardTabControls cardControl.editing {
 cardTabControls {
   display: flex;
   position: absolute;
-  top: calc(var(--offset-top) + 89px);
-  left: calc(50vw + var(--card-width) * 0.5 - min(6.5vh, 80px) + 34px);
+  top: calc(var(--offset-top) + 76px);
+  left: calc(50vw + var(--card-width) * 0.5 - min(6vh, 80px) + 34px);
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: flex-end;
@@ -133,8 +135,8 @@ cardTabControls {
 }
 cardTabControls cardControl {
   position: relative;
-  width: min(6.5vh, 80px);
-  height: min(6.5vh, 80px);
+  width: min(6vh, 80px);
+  height: min(6vh, 80px);
   margin-bottom: 12px;
   background-size: 100%;
   background-repeat: no-repeat;
@@ -154,6 +156,9 @@ cardTabControls cardControl::before {
   background-position: center;
 }
 
+cardTabControls cardControl.edit {
+  margin-top: 32px;
+}
 cardTabControls cardControl.edit::before {
   background-image: url('./assets/edit.png');
   background-size: 60%;
@@ -185,7 +190,8 @@ cardTabControls cardControl.filterAdvocate::before,
 cardTabControls cardControl.filterAdversary::before,
 cardTabControls cardControl.filterNeutral::before,
 cardTabControls cardControl.filterUpgrade::before,
-cardTabControls cardControl.filterRelic::before {
+cardTabControls cardControl.filterRelic::before,
+cardTabControls cardControl.filterShop::before {
   content: 'U';
   display: flex;
   justify-content: center;
@@ -198,7 +204,8 @@ cardControl.filterAdvocate,
 cardControl.filterAdversary,
 cardControl.filterNeutral,
 cardControl.filterUpgrade,
-cardControl.filterRelic {
+cardControl.filterRelic,
+cardControl.filterShop {
     filter: contrast(0.75) invert(1);
 }
 cardControl.inactive {
@@ -216,6 +223,10 @@ cardTabControls cardControl.filterNeutral::before {
 }
 cardTabControls cardControl.filterRelic::before {
   content: 'R';
+}
+cardTabControls cardControl.filterShop::before {
+  font-size: 30px;
+  content: '$';
 }
 
 
@@ -364,17 +375,6 @@ body.empty foot,
 body:not(.empty) empty {
   display: none;
 }
-body.loading cardScroller, 
-body.loading cardTabControls, 
-body.loading cardControls, 
-body.loading foot,
-body.loading empty {
-  display: none;
-}
-
-body:not(.loading) loading {
-  display: none;
-}
 
 @keyframes loadingSpin {
   0% {
@@ -397,4 +397,39 @@ loading {
   border: 12px solid #0000;
   border-top-color: #fff;
   border-bottom-color: #fff1;
+}
+overlayMenu, loadingOverlay {
+  position: fixed;
+  top:0px;
+  left:0px;
+  width:100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+
+  opacity: 1;
+  transition: opacity 0.2s;
+  user-select: none;
+}
+loadingOverlay {
+  pointer-events: all;
+}
+overlayMenu.hidden, body:not(.loading) loadingOverlay {
+  opacity: 0;
+  pointer-events: none;
+}
+label input {
+  display: none;
+}
+menuControl, .menuControl {
+  display: block;
+  font-size: 24px;
+  font-family: 'tradeWinds';
+  margin-top:24px;
+  text-decoration: underline;
 }

@@ -14,6 +14,75 @@ PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 var database;
 var deck = [];
 
+const filterAdvocateEle = document.querySelector('cardControl.filterAdvocate');
+const filterAdversaryEle = document.querySelector('cardControl.filterAdversary');
+const filterNeutralEle = document.querySelector('cardControl.filterNeutral');
+const filterUpgradeEle = document.querySelector('cardControl.filterUpgrade');
+const filterRelicEle = document.querySelector('cardControl.filterRelic');
+const filterShopEle = document.querySelector('cardControl.filterShop');
+
+var searchText = '';
+const filters = {
+  advocate: {
+    ele: filterAdvocateEle,
+    filter: /advocate/i,
+    active: false
+  },
+  adversary: {
+    ele: filterAdversaryEle,
+    filter: /adversary/i,
+    active: false
+  },
+  neutral: {
+    ele: filterNeutralEle,
+    filter: /neutral/i,
+    active: false
+  },
+  upgrade: {
+    ele: filterUpgradeEle,
+    filter: /upgrade/i,
+    active: false
+  },
+  relic: {
+    ele: filterRelicEle,
+    filter: /relic/i,
+    active: false
+  },
+  shop: {
+    ele: filterShopEle,
+    filter: /purchase/i,
+    active: false
+  }
+};
+
+const applyFilters = () => {
+  const allFalse = !Object.values(filters).find(o => o.active);
+
+  const libraryCardEles = [...cardLibraryListEle.children];
+
+  for (const cardEle of libraryCardEles) {
+    const uid = cardEle.getAttribute('uid');
+    const storeItem = store[uid];
+
+    if (!storeItem) {
+      cardEle.classList.toggle('inactive', !allFalse || !!searchText.trim());
+
+      continue;
+    }
+
+    const filterShow = Object.values(filters).find(o => {
+      return o.active && storeItem.match(o.filter);
+    });
+
+    const searchShow = storeItem.toLowerCase().includes(searchText.toLowerCase());
+
+    cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow);
+  }
+  window.requestAnimationFrame(() => {
+    cardScrollerEle.scrollTo(0, 0);
+  });
+}
+
 const updateDeck = () => {
   // work out total points in deck :D
   const cards = deck.map(id => store[id]);
@@ -21,8 +90,8 @@ const updateDeck = () => {
 
   const deckCostEle = document.getElementById('points');
 
-  deckCostEle.innerHTML = cost ? `&nbsp;(${cost})` : "";
-}
+  deckCostEle.innerHTML = cost ? `&nbsp;(${cost})` : '';
+};
 
 const loadCardDataFromUrl = (() => {
   const loadingCanvas = document.createElement('canvas');
@@ -85,7 +154,7 @@ const loadCardDataFromUrl = (() => {
         const MAX_PIXEL_VALUE = (w * 2 + h * 2) * 3 * 255;
 
         if (blackCount > MAX_PIXEL_VALUE * 0.05) {
-          return "";
+          return '';
         }
 
         return saveCanvas.toDataURL();
@@ -130,10 +199,10 @@ const loadCardDataFromUrl = (() => {
   }
 })();
 
-const cardScrollerEle = document.querySelector("cardScroller");
-const cardLibraryListEle = document.querySelector("cardList.library");
-const cardDeckListEle = document.querySelector("cardList.deck");
-const cardControlsEle = document.querySelector("cardControls");
+const cardScrollerEle = document.querySelector('cardScroller');
+const cardLibraryListEle = document.querySelector('cardList.library');
+const cardDeckListEle = document.querySelector('cardList.deck');
+const cardControlsEle = document.querySelector('cardControls');
 
 const loadCardsFromUrl = async (url) => {
   const [images, title] = await loadCardDataFromUrl(url);
@@ -157,8 +226,8 @@ const getCardLibraryPlacementBeforeEle = (placeCard) => {
   const libraryCardEles = [...cardLibraryListEle.children];
 
   const getCardSortWeighting = (cardEle) => {
-    const cardUID = cardEle.getAttribute("uid");
-    const cardStore = store[cardUID] || "ZZ";
+    const cardUID = cardEle.getAttribute('uid');
+    const cardStore = store[cardUID] || 'ZZ';
 
     // is character / summon adjacent
     const isSummonOrCharacter = !!cardStore.match(/(character|summon)/i);
@@ -204,10 +273,10 @@ const getCardLibraryPlacementBeforeEle = (placeCard) => {
 };
 
 const loadCard = (card) => {
-  const cardEle = document.createElement("card");
+  const cardEle = document.createElement('card');
 
-  cardEle.setAttribute("uid", card.uid);
-  cardEle.setAttribute("index", card.index);
+  cardEle.setAttribute('uid', card.uid);
+  cardEle.setAttribute('index', card.index);
 
   // where should it be placed.
   const beforeEle = getCardLibraryPlacementBeforeEle(cardEle);
@@ -218,7 +287,7 @@ const loadCard = (card) => {
     cardLibraryListEle.append(cardEle);
   }
 
-  cardEle.style.setProperty("background-image", `url('${card.image}')`);
+  cardEle.style.setProperty('background-image', `url('${card.image}')`);
 };
 
 const addCardToDatabase = async (image, uid) => {
@@ -240,9 +309,10 @@ const addCardToDatabase = async (image, uid) => {
 };
 
 const getCurrentCardEle = () => {
-  const cardEle = document.elementFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
+  const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
+  const cardEle = pointEles.find(ele => ele.tagName == 'CARD');
 
-  if (cardEle.tagName == "CARD") {
+  if (cardEle?.tagName == 'CARD') {
     return cardEle;
   }
 };
@@ -250,10 +320,10 @@ const getCurrentCardEle = () => {
 const showToast = (() => {
   var currentToastTimeout;
 
-  const toastEle = document.querySelector("toast");
+  const toastEle = document.querySelector('toast');
 
-  window.addEventListener("touchstart", () => {
-    toastEle.style.setProperty("opacity", 0);
+  window.addEventListener('touchstart', () => {
+    toastEle.style.setProperty('opacity', 0);
   });
 
   return (toastText) => {
@@ -262,10 +332,10 @@ const showToast = (() => {
     }
 
     toastEle.innerHTML = toastText;
-    toastEle.style.setProperty("opacity", 0.9);
+    toastEle.style.setProperty('opacity', 0.9);
 
     currentToastTimeout = setTimeout(() => {
-      toastEle.style.setProperty("opacity", 0);
+      toastEle.style.setProperty('opacity', 0);
     }, 4000);
   }
 })()
@@ -279,7 +349,7 @@ const init = async () => {
       }
       const cardObjectStore = db.createObjectStore('cards', { keyPath: 'index', autoIncrement: true }); 
 
-      cardObjectStore.createIndex("uid", "uid", { unique: true });
+      cardObjectStore.createIndex('uid', 'uid', { unique: true });
     }});
 
   const transaction = database.transaction('cards');
@@ -291,17 +361,20 @@ const init = async () => {
     loadCard(card);
   }
 
-  document.body.className = cards.length ? "" : "empty";
+  document.body.className = cards.length ? '' : 'empty';
 
-  const fileUploadEle = document.getElementById("fileUpload");
+  document.querySelector('label.menuControl.fileUpload').addEventListener('click', event => {
+    overlayMenuEle.className = 'hidden';
+    document.body.className = 'loading';
+  });
 
-  fileUploadEle.addEventListener("change", (event) => {
+  const fileUploadEle = document.getElementById('fileUpload');
+  fileUploadEle.addEventListener('change', (event) => {
     try {
-      document.body.className = "loading";
 
       let [file] = event.target.files;
       if (!file) {
-        document.body.className = "";
+        document.body.className = '';
       };
 
       const reader = new FileReader();
@@ -311,24 +384,25 @@ const init = async () => {
 
           applyFilters();
         } finally {
-          document.body.className = "";
+          document.body.className = '';
         }
       }
       reader.readAsDataURL(file)
     } catch (error) {
       console.error(error);
-      alert("Something failed... Sorry.")
+      alert('Something failed... Sorry.')
     }
   });
 
-  deck = (localStorage.getItem("deck") || "")
+  // inital deck production
+  deck = (localStorage.getItem('deck') || '')
     .split(',')
     .filter(v => v && cards.find(card => card.uid == v));
   updateDeck();
   const initialLibraryCardEles = [...cardLibraryListEle.children];
 
   for (const cardId of deck) {
-    const cardEle = initialLibraryCardEles.find(ele => ele.getAttribute("uid") == cardId);
+    const cardEle = initialLibraryCardEles.find(ele => ele.getAttribute('uid') == cardId);
     
     if (!cardEle) continue;
     const cardCloneEle = cardEle.cloneNode(true);
@@ -336,46 +410,68 @@ const init = async () => {
     cardDeckListEle.append(cardCloneEle);
   }
 
-  const cardScroller = document.querySelector("cardScroller");
+  applyFilters();
 
-  document.querySelector("cardControl.showLibrary").addEventListener("click", () => {
-    document.body.className = "";
-    cardScroller.className = "library";
+  const cardScroller = document.querySelector('cardScroller');
+
+  var libraryFocusCard;
+  var deckFocusCard;
+
+  document.querySelector('cardControl.showLibrary').addEventListener('click', () => {
+    document.body.className = '';
+
+    if (cardScroller.className !== 'deck') return;
+    const currentCard = getCurrentCardEle();
+
+    deckFocusCard = currentCard;
+
+    // scroll to the last library focused' card
+    cardScroller.className = 'library';
+
+    const cardScrollX = libraryFocusCard.offsetLeft;
+    cardScroller.scrollTo(cardScrollX, 0);
   });
-  document.querySelector("cardControl.showDeck").addEventListener("click", () => {
-    cardScroller.className = "deck";
+  document.querySelector('cardControl.showDeck').addEventListener('click', () => {
+    if (cardScroller.className !== 'library') return;
+    const currentCard = getCurrentCardEle();
+
+    libraryFocusCard = currentCard;
+
+    // scroll to the last library focused' card
+    cardScroller.className = 'deck';
+
+    const cardScrollX = deckFocusCard.offsetLeft;
+    cardScroller.scrollTo(cardScrollX, 0);
   });
 
-  document.querySelector("cardControl.removeFromDeck").addEventListener("click", () => {
+  document.querySelector('cardControl.removeFromDeck').addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
 
     if (currentCardEle) {
       const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
 
       deck.splice(currentCardIndex, 1);
-      localStorage.setItem("deck", deck);
+      localStorage.setItem('deck', deck);
       updateDeck();
 
       showToast(`Card removed from deck`);
       currentCardEle.remove();
     }
   });
-  document.querySelector("cardControl.addToDeck").addEventListener("click", () => {
+  document.querySelector('cardControl.addToDeck').addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
+    if (!currentCardEle) return;
 
-    if (currentCardEle) {
-      const cardEleClone = currentCardEle.cloneNode(true);
+    const cardEleClone = currentCardEle.cloneNode(true);
 
-      cardDeckListEle.append(cardEleClone);
-      deck.push(currentCardEle.getAttribute("uid"));
-      updateDeck();
+    cardDeckListEle.append(cardEleClone);
+    deck.push(currentCardEle.getAttribute('uid'));
+    updateDeck();
 
-      showToast(`Card added to deck`);
-      localStorage.setItem("deck", deck);
-    }
-
+    showToast(`Card added to deck`);
+    localStorage.setItem('deck', deck);
   });
-  document.querySelector("cardControl.shiftUp").addEventListener("click", () => {
+  document.querySelector('cardControl.shiftUp').addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
@@ -385,14 +481,14 @@ const init = async () => {
     const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
     const previousCardIndex = currentCardIndex - 1;
 
-    deck[currentCardIndex] = previousCardEle.getAttribute("uid");
-    deck[previousCardIndex] = currentCardEle.getAttribute("uid");
+    deck[currentCardIndex] = previousCardEle.getAttribute('uid');
+    deck[previousCardIndex] = currentCardEle.getAttribute('uid');
 
-    localStorage.setItem("deck", deck);
+    localStorage.setItem('deck', deck);
     
     cardDeckListEle.insertBefore(currentCardEle, previousCardEle);
   });
-  document.querySelector("cardControl.shiftDown").addEventListener("click", () => {
+  document.querySelector('cardControl.shiftDown').addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
@@ -402,24 +498,24 @@ const init = async () => {
     const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
     const nextCardIndex = currentCardIndex + 1;
 
-    deck[currentCardIndex] = nextCardEle.getAttribute("uid");
-    deck[nextCardIndex] = currentCardEle.getAttribute("uid");
+    deck[currentCardIndex] = nextCardEle.getAttribute('uid');
+    deck[nextCardIndex] = currentCardEle.getAttribute('uid');
 
-    localStorage.setItem("deck", deck);
+    localStorage.setItem('deck', deck);
     
     cardDeckListEle.insertBefore(nextCardEle, currentCardEle);
   });
 
   const handleEdit = () => {
-    document.body.className = "editing";
+    document.body.className = 'editing';
     
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
-    var canvasEle = currentCardEle.querySelector("canvas");
+    var canvasEle = currentCardEle.querySelector('canvas');
     if (canvasEle) return;
 
-    canvasEle = document.createElement("canvas");
+    canvasEle = document.createElement('canvas');
 
     canvasEle.width = CARD_WIDTH;
     canvasEle.height = CARD_HEIGHT;
@@ -434,7 +530,7 @@ const init = async () => {
     var cy = 0;
 
     var lineWidth = 8;
-    var color = "#000000";
+    var color = '#000000';
 
     const getXY = (e) => {
       const rx = (e.touches[0].clientX - canvasBoundingBox.left) * CARD_WIDTH / canvasBoundingBox.width;
@@ -444,11 +540,11 @@ const init = async () => {
     };
 
     const drawTo = (nx, ny) => {
-      const drawType = document.body.getAttribute("drawType");
+      const drawType = document.body.getAttribute('drawType');
 
-      if (drawType == "erase") {
+      if (drawType == 'erase') {
         canvasContext.save();
-        canvasContext.globalCompositeOperation = "destination-out";
+        canvasContext.globalCompositeOperation = 'destination-out';
         canvasContext.beginPath();
         canvasContext.arc(nx, ny, lineWidth, 0, 2 * Math.PI);
         canvasContext.fillStyle = color;
@@ -466,24 +562,24 @@ const init = async () => {
       [cx, cy] = [nx, ny];
     };
 
-    canvasEle.addEventListener("touchmove", function (e) {
+    canvasEle.addEventListener('touchmove', function (e) {
       const [nx, ny] = getXY(e);
 
       drawTo(nx, ny);
 
       e.preventDefault();
     }, false);
-    canvasEle.addEventListener("touchstart", function (e) {
+    canvasEle.addEventListener('touchstart', function (e) {
       [cx, cy] = getXY(e);
 
       drawTo(cx, cy);
 
       e.preventDefault();
     }, false);
-    canvasEle.addEventListener("touchend", function (e) {
+    canvasEle.addEventListener('touchend', function (e) {
       e.preventDefault();
     }, false);
-    canvasEle.addEventListener("touchcancel", function (e) {
+    canvasEle.addEventListener('touchcancel', function (e) {
       const [nx, ny] = getXY(e);
 
       drawTo(nx, ny);
@@ -492,89 +588,26 @@ const init = async () => {
     }, false);
   };
 
-  document.querySelector("cardControl.edit").addEventListener("click", () => {
-    document.body.setAttribute("drawType", "draw");
+  document.querySelector('cardControl.edit').addEventListener('click', () => {
+    document.body.setAttribute('drawType', 'draw');
 
     handleEdit();
   });
 
-  document.querySelector("cardControl.erase").addEventListener("click", () => {
-    document.body.setAttribute("drawType", "erase");
+  document.querySelector('cardControl.erase').addEventListener('click', () => {
+    document.body.setAttribute('drawType', 'erase');
 
     handleEdit();
   });
 
-  document.querySelector("cardControl.end").addEventListener("click", () => {
-    document.body.className = "";
+  document.querySelector('cardControl.end').addEventListener('click', () => {
+    document.body.className = '';
   });
-
-  const filterAdvocateEle = document.querySelector("cardControl.filterAdvocate");
-  const filterAdversaryEle = document.querySelector("cardControl.filterAdversary");
-  const filterNeutralEle = document.querySelector("cardControl.filterNeutral");
-  const filterUpgradeEle = document.querySelector("cardControl.filterUpgrade");
-  const filterRelicEle = document.querySelector("cardControl.filterRelic");
-
-  var searchText = "";
-  const filters = {
-    advocate: {
-      ele: filterAdvocateEle,
-      filter: /advocate/i,
-      active: false
-    },
-    adversary: {
-      ele: filterAdversaryEle,
-      filter: /adversary/i,
-      active: false
-    },
-    neutral: {
-      ele: filterNeutralEle,
-      filter: /neutral/i,
-      active: false
-    },
-    upgrade: {
-      ele: filterUpgradeEle,
-      filter: /upgrade/i,
-      active: false
-    },
-    relic: {
-      ele: filterRelicEle,
-      filter: /relic/i,
-      active: false
-    }
-  };
-
-  const applyFilters = () => {
-    const allFalse = !Object.values(filters).find(o => o.active);
-
-    const libraryCardEles = [...cardLibraryListEle.querySelectorAll('card')];
-
-    for (const cardEle of libraryCardEles) {
-      const uid = cardEle.getAttribute("uid");
-      const storeItem = store[uid];
-
-      if (!storeItem) {
-        cardEle.classList.toggle('inactive', !allFalse || !!searchText.trim());
-
-        continue;
-      }
-
-      const filterShow = Object.values(filters).find(o => {
-        return o.active && storeItem.match(o.filter);
-      });
-
-      const searchShow = storeItem.toLowerCase().includes(searchText.toLowerCase());
-
-      cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow);
-    }
-    window.requestAnimationFrame(() => {
-      cardScrollerEle.scrollTo(0, 0);
-    });
-  }
 
   Object.keys(filters)
     .forEach(key => {
       const object = filters[key];
-      object.ele.addEventListener("click", () => {
+      object.ele.addEventListener('click', () => {
         const startsInactive = object.ele.classList.contains('inactive');
         object.ele.classList.toggle('inactive');
     
@@ -585,39 +618,56 @@ const init = async () => {
       });
     });
 
-  document.querySelector("cardControl.search").addEventListener("click", async () => {
-    searchText = prompt("Cards to search for (eg, dodge, spell): ");
+  document.querySelector('cardControl.search').addEventListener('click', async () => {
+    searchText = prompt('Cards to search for (eg, dodge, spell): ') || '';
 
-    applyFilters();
+    if (searchText) {
+      applyFilters();
 
-    cardControlsEle.className = "searched";
+      cardControlsEle.className = 'searched';
+    }
   });
-  document.querySelector("cardControl.clearSearch").addEventListener("click", async () => {
+  document.querySelector('cardControl.clearSearch').addEventListener('click', async () => {
     // apply search within filters?
-    searchText = "";
+    searchText = '';
 
     applyFilters();
 
-    cardControlsEle.className = "";
+    cardControlsEle.className = '';
   });
 
-  document.querySelector("cardControl.destroy").addEventListener("click", async () => {
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
-    
-    const confirmValue = confirm("Are you sure you want to remove this card from your library?");
-    if (!confirmValue) return;
+  document.querySelector('menuControl.removeLibraryCard').addEventListener('click', async (e) => {
+    overlayMenuEle.className = 'hidden';
+    e.preventDefault();
 
-    // remove it from the library.
-    const transaction = database.transaction(['cards'], 'readwrite');
-    const objectStore = transaction.objectStore('cards');
+    setTimeout(async () => {
+      const currentCardEle = getCurrentCardEle();
+      if (!currentCardEle) return;
+      
+      const confirmValue = confirm('Are you sure you want to remove this card from your library?');
+      if (!confirmValue) return;
+  
+      // remove it from the library.
+      const transaction = database.transaction(['cards'], 'readwrite');
+      const objectStore = transaction.objectStore('cards');
+  
+      const index = parseInt(currentCardEle.getAttribute('index'))
+  
+      await objectStore.delete(index);
+  
+      showToast('Card Removed');
+      currentCardEle.remove();
+    }, 200);
+  });
 
-    const index = parseInt(currentCardEle.getAttribute("index"))
+  const overlayMenuEle = document.querySelector('overlayMenu');
+  overlayMenuEle.addEventListener('click', e => {
+    if (e.target !== overlayMenuEle) return;
+    overlayMenuEle.className = 'hidden';
+  });
 
-    await objectStore.delete(index);
-
-    showToast("Card Removed");
-    currentCardEle.remove();
+  document.querySelector('ham').addEventListener('click', () => {
+    overlayMenuEle.className = '';
   });
 };
 

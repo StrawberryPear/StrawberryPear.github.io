@@ -15,11 +15,13 @@
   <body class="loading">
     <nav>
       <call>Deck Builder</call>
-      <label class="navControl"><input id="fileUpload" type='file' /></label>
+      <ham></ham>
     </nav>
 
     <cardScroller class="library">
       <cardList class="library">
+        <purchase uid="Temple of Justice" owned="0"></purchase>
+        <purchase uid="Lostwood Enclave" owned="0"></purchase>
       </cardList>
       <cardList class="deck">
       </cardList>
@@ -33,18 +35,18 @@
 
       <cardControl class="deck shiftUp"></cardControl>
       <cardControl class="deck shiftDown"></cardControl>
-      
-      <cardControl class="library destroy"></cardControl>
 
       <cardControl class="library filterAdvocate inactive"></cardControl>
       <cardControl class="library filterAdversary inactive"></cardControl>
       <cardControl class="library filterNeutral inactive"></cardControl>
       <cardControl class="library filterUpgrade inactive"></cardControl>
       <cardControl class="library filterRelic inactive"></cardControl>
+      <cardControl class="library filterShop inactive"></cardControl>
     </cardTabControls>
 
     <cardControls>
       <cardControl class="deck removeFromDeck">Remove from Deck</cardControl>
+
       <cardControl class="library addToDeck">Add to Deck</cardControl>
       <cardControl class="library search">Search</cardControl>
       <cardControl class="library clearSearch">Clear Search</cardControl>
@@ -62,8 +64,16 @@
       <emptyText>To use this app, you have to hit the add cardset button, and import a relicblade card pdf. You can find these pdfs for sale at <a href="https://relicblade.com/shop?category=Digital+Download">Relicblade.com</a>.</emptyText>
     </empty>
 
-    <loading>
-    </loading>
+    <loadingOverlay>
+      <loading>
+      </loading>
+    </loadingOverlay>
+
+    <overlayMenu class="hidden">
+      <menuControl class="library removeLibraryCard">Remove Card From Library</menuControl>
+      <label class="menuControl fileUpload">Add Cards from PDF<input id="fileUpload" type='file' /></label>
+    </overlayMenu>
+
     <script src="./store.js"></script>
     <script src="./viewer.js"></script>
   </body>
