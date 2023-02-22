@@ -153,12 +153,70 @@ const loadCardsFromUrl = async (url) => {
   showToast(`${cardsLoaded} cards added to library`);
 };
 
+const getCardLibraryPlacementBeforeEle = (placeCard) => {
+  const libraryCardEles = [...cardLibraryListEle.children];
+
+  const getCardSortWeighting = (cardEle) => {
+    const cardUID = cardEle.getAttribute("uid");
+    const cardStore = store[cardUID] || "ZZ";
+
+    // is character / summon adjacent
+    const isSummonOrCharacter = !!cardStore.match(/(character|summon)/i);
+    const isAdvocate = !!cardStore.match(/advocate/i);
+    const isAdversary = !!cardStore.match(/adversary/i);
+    const cardSet = cardUID.substr(0, cardUID.length - 4);
+
+    const isUpgrade = !!cardStore.match(/upgrade/i);
+    const isRelic = !!cardStore.match(/relic/i);
+
+    const score = (() => {
+      if (isSummonOrCharacter) {
+        if (isAdvocate) {
+          return 0;
+        } 
+        if (isAdversary) {
+          return 1;
+        }
+        return 2;
+      }
+      if (isUpgrade) {
+        return 3;
+      }
+      if (isRelic) {
+        return 4;
+      }
+      return 5;
+    })();
+
+    return `${score}${cardSet}${cardStore}`
+  }
+
+  const placeCardWeighting = getCardSortWeighting(placeCard);
+
+  for (const card of libraryCardEles) {
+    const cardWeighting = getCardSortWeighting(card);
+
+    if (placeCardWeighting < cardWeighting) {
+      return card;
+    }
+  }
+  return undefined;
+};
+
 const loadCard = (card) => {
   const cardEle = document.createElement("card");
-  cardLibraryListEle.append(cardEle);
 
   cardEle.setAttribute("uid", card.uid);
   cardEle.setAttribute("index", card.index);
+
+  // where should it be placed.
+  const beforeEle = getCardLibraryPlacementBeforeEle(cardEle);
+
+  if (beforeEle) {
+    cardLibraryListEle.insertBefore(cardEle, beforeEle);
+  } else {
+    cardLibraryListEle.append(cardEle);
+  }
 
   cardEle.style.setProperty("background-image", `url('${card.image}')`);
 };
