@@ -356,6 +356,7 @@ const init = async () => {
   database = await idb.openDB('relicbladeCards', 2, {
     upgrade: (db, oldVersion) => {
       if (oldVersion == 1) {
+        localStorage.setItem("deck", []);
         db.deleteObjectStore('cards');
       }
       const cardObjectStore = db.createObjectStore('cards', { keyPath: 'index', autoIncrement: true }); 
