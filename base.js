@@ -14,86 +14,6 @@ PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 var database;
 var deck = [];
 
-const filterAdvocateEle = document.querySelector('cardControl.filterAdvocate');
-const filterAdversaryEle = document.querySelector('cardControl.filterAdversary');
-const filterNeutralEle = document.querySelector('cardControl.filterNeutral');
-const filterUpgradeEle = document.querySelector('cardControl.filterUpgrade');
-const filterRelicEle = document.querySelector('cardControl.filterRelic');
-const filterShopEle = document.querySelector('cardControl.filterShop');
-
-var searchText = '';
-const filters = {
-  advocate: {
-    ele: filterAdvocateEle,
-    filter: /advocate/i,
-    active: false
-  },
-  adversary: {
-    ele: filterAdversaryEle,
-    filter: /adversary/i,
-    active: false
-  },
-  neutral: {
-    ele: filterNeutralEle,
-    filter: /neutral/i,
-    active: false
-  },
-  upgrade: {
-    ele: filterUpgradeEle,
-    filter: /upgrade/i,
-    active: false
-  },
-  relic: {
-    ele: filterRelicEle,
-    filter: /relic/i,
-    active: false
-  },
-  shop: {
-    ele: filterShopEle,
-    filter: /purchase/i,
-    active: false
-  }
-};
-
-const applyFilters = () => {
-  const allFalse = !Object.values(filters).find(o => o.active);
-
-  const libraryCardEles = [...cardLibraryListEle.children];
-
-  for (const cardEle of libraryCardEles) {
-    const uid = cardEle.getAttribute('uid');
-    const storeItem = store[uid];
-
-    if (!storeItem) {
-      cardEle.classList.toggle('inactive', !allFalse || !!searchText.trim());
-
-      continue;
-    }
-
-    const filterShow = Object.values(filters).find(o => {
-      return o.active && storeItem.match(o.filter);
-    });
-
-    const searchShow = storeItem.toLowerCase().includes(searchText.toLowerCase());
-
-    cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow);
-  }
-  window.requestAnimationFrame(() => {
-    cardScrollerEle.scrollTo(0, 0);
-  });
-
-  // check purchases
-  for (const purchaseEle of [...libraryCardEles.filter(ele => ele.tagName == "PURCHASE")]) {
-    const uid = purchaseEle.getAttribute("uid").toLowerCase();
-
-    const hasCardsMatching = libraryCardEles
-      .filter(ele => ele.tagName == "CARD")
-      .find(cardEle => (cardEle.getAttribute("uid") || "").toLowerCase().includes(uid));
-
-    purchaseEle.classList.toggle("bought", !!hasCardsMatching);
-  }
-}
-
 const updateDeck = () => {
   // work out total points in deck :D
   const cards = deck.map(id => store[id]);
@@ -104,220 +24,10 @@ const updateDeck = () => {
   deckCostEle.innerHTML = cost ? `&nbsp;(${cost})` : '';
 };
 
-const loadCardDataFromUrl = (() => {
-  const loadingCanvas = document.createElement('canvas');
-
-  const CARD_ROWS = 3;
-  const CARD_COLS = 3;
-  const CARD_PER_PAGE = CARD_ROWS * CARD_COLS;
-
-  const CARD_ROW_OFFSET = 10;
-
-  return async (url) => {
-    const cardImages = [];
-
-    const loadingTask = PDFJS.getDocument(url);
-
-    const getCanvasDataURL = (() => {
-      const saveCanvas = document.createElement('canvas');
-
-      return (originCanvas, x, y, w, h) => {
-        saveCanvas.width = w;
-        saveCanvas.height = h;
-
-        const saveContext = saveCanvas.getContext('2d');
-
-        saveContext.drawImage(originCanvas, x, y, w, h, 0, 0, w, h);
-
-        // check if it has a border most of the way around, at least 90%.
-        const imageData = saveContext.getImageData(0, 0, w, h);
-        const pixelData = imageData.data;
-
-        var blackCount = 0;
-
-        const bottomOffset = (h - 1) * w * 4;
-        const rightOffset = (w - 1) * 4;
-
-        for (var xi = 0; xi < w; xi++) {
-          const ri = xi * 4;
-          const gi = xi * 4 + 1;
-          const bi = xi * 4 + 2;
-
-          const topPixel = pixelData[ri] + pixelData[gi] + pixelData[bi];
-          const bottomPixel = pixelData[bottomOffset + ri] + pixelData[bottomOffset + gi] + pixelData[bottomOffset + bi];
-          
-          blackCount += topPixel + bottomPixel;
-        }
-        
-        for (var yi = 0; yi < h; yi++) {
-          const oi = yi * 4 * w;
-
-          const ri = oi;
-          const gi = oi + 1;
-          const bi = oi + 2;
-
-          const leftPixel = pixelData[ri] + pixelData[gi] + pixelData[bi];
-          const rightPixel = pixelData[rightOffset + ri] + pixelData[rightOffset + gi] + pixelData[rightOffset + bi];
-
-          blackCount += leftPixel + rightPixel;
-        }
-        
-        const MAX_PIXEL_VALUE = (w * 2 + h * 2) * 3 * 255;
-
-        if (blackCount > MAX_PIXEL_VALUE * 0.05) {
-          return '';
-        }
-
-        return saveCanvas.toDataURL();
-      }
-    })();
-
-    const pdf = await loadingTask.promise;
-    const metaData = await pdf.getMetadata();
-
-    var totalPages = pdf.numPages
-    var data = [];
-
-    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
-      const page = await pdf.getPage(pageNumber);
-      
-      const text = await page.getTextContent();
-
-      var viewport = page.getViewport({ scale: SCALE });
-
-      // Prepare canvas using PDF page dimensions
-      var context = loadingCanvas.getContext('2d');
-      loadingCanvas.height = viewport.height;
-      loadingCanvas.width = viewport.width;
-
-      // Render PDF page into canvas context
-      var renderContext = { canvasContext: context, viewport: viewport };
-
-      const render = await page.render(renderContext).promise;
-
-      [...Array(CARD_PER_PAGE)].map((_, i) => {
-        const r = Math.floor(i / CARD_COLS);
-        const c = i % CARD_COLS;
-
-        const x = CARD_OFFSET_X + CARD_WIDTH * c;
-        const y = CARD_OFFSET_Y + CARD_HEIGHT * r + CARD_ROW_OFFSET * r;
-
-        cardImages.push(getCanvasDataURL(loadingCanvas, x, y, CARD_WIDTH, CARD_HEIGHT));
-      });
-    }
-
-    return [cardImages, metaData.info.Title];
-  }
-})();
-
 const cardScrollerEle = document.querySelector('cardScroller');
 const cardLibraryListEle = document.querySelector('cardList.library');
 const cardDeckListEle = document.querySelector('cardList.deck');
 const cardControlsEle = document.querySelector('cardControls');
-
-const loadCardsFromUrl = async (url) => {
-  const [images, title] = await loadCardDataFromUrl(url);
-
-  var cardsLoaded = 0;
-
-  for (const imageIndex in images) {
-    const image = images[imageIndex];
-
-    if (image.length < 8064) continue;
-
-    await addCardToDatabase(image, `${title} - ${cardsLoaded}`);
-  
-    cardsLoaded++;
-  }
-  
-  showToast(`${cardsLoaded} cards added to library`);
-};
-
-const getCardLibraryPlacementBeforeEle = (placeCard) => {
-  const libraryCardEles = [...cardLibraryListEle.children];
-
-  const getCardSortWeighting = (cardEle) => {
-    const cardUID = cardEle.getAttribute('uid');
-    const cardStore = store[cardUID] || 'ZZ';
-
-    // is character / summon adjacent
-    const isSummonOrCharacter = !!cardStore.match(/(character|summon)/i);
-    const isAdvocate = !!cardStore.match(/advocate/i);
-    const isAdversary = !!cardStore.match(/adversary/i);
-    const cardSet = cardUID.substr(0, cardUID.length - 4);
-
-    const isUpgrade = !!cardStore.match(/upgrade/i);
-    const isRelic = !!cardStore.match(/relic/i);
-
-    const score = (() => {
-      if (isSummonOrCharacter) {
-        if (isAdvocate) {
-          return 0;
-        } 
-        if (isAdversary) {
-          return 1;
-        }
-        return 2;
-      }
-      if (isUpgrade) {
-        return 3;
-      }
-      if (isRelic) {
-        return 4;
-      }
-      return 5;
-    })();
-
-    return `${score}${cardSet}${cardStore}`
-  }
-
-  const placeCardWeighting = getCardSortWeighting(placeCard);
-
-  for (const card of libraryCardEles) {
-    const cardWeighting = getCardSortWeighting(card);
-
-    if (placeCardWeighting < cardWeighting) {
-      return card;
-    }
-  }
-  return undefined;
-};
-
-const loadCard = (card) => {
-  const cardEle = document.createElement('card');
-
-  cardEle.setAttribute('uid', card.uid);
-  cardEle.setAttribute('index', card.index);
-
-  // where should it be placed.
-  const beforeEle = getCardLibraryPlacementBeforeEle(cardEle);
-
-  if (beforeEle) {
-    cardLibraryListEle.insertBefore(cardEle, beforeEle);
-  } else {
-    cardLibraryListEle.append(cardEle);
-  }
-
-  cardEle.style.setProperty('background-image', `url('${card.image}')`);
-};
-
-const addCardToDatabase = async (image, uid) => {
-  const transaction = database.transaction('cards', 'readwrite');
-
-  try {
-    const objectStore = transaction.objectStore('cards');
-    const storeId = await objectStore.add({uid, image});
-
-    const result = await objectStore.get(storeId);
-
-    loadCard(result);
-    
-    return true;
-  } catch(err) {
-    console.error(err);
-    return false;
-  }
-};
 
 const getCurrentCardEle = (canBePurchase) => {
   const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
@@ -327,6 +37,10 @@ const getCurrentCardEle = (canBePurchase) => {
     return cardEle;
   }
 };
+
+const showModal = ((contentEle) => {
+
+})();
 
 const showToast = (() => {
   var currentToastTimeout;
@@ -372,8 +86,6 @@ const init = async () => {
   for (const card of cards) {
     loadCard(card);
   }
-
-  document.body.className = cards.length ? '' : 'empty';
 
   [...document.querySelectorAll('label.fileUpload')].map(ele => ele.addEventListener('click', event => {
     overlayMenuEle.className = 'hidden';
@@ -429,7 +141,7 @@ const init = async () => {
   var libraryFocusCard;
   var deckFocusCard;
 
-  document.querySelector('cardControl.showLibrary').addEventListener('click', () => {
+  document.querySelector('footControl.showLibrary').addEventListener('click', () => {
     document.body.className = '';
 
     if (cardScroller.className !== 'deck') return;
@@ -443,7 +155,7 @@ const init = async () => {
     const cardScrollX = libraryFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
   });
-  document.querySelector('cardControl.showDeck').addEventListener('click', () => {
+  document.querySelector('footControl.showDeck').addEventListener('click', () => {
     if (cardScroller.className !== 'library') return;
     const currentCard = getCurrentCardEle(true);
 
@@ -456,7 +168,7 @@ const init = async () => {
     cardScroller.scrollTo(cardScrollX, 0);
   });
 
-  document.querySelector('cardControl.removeFromDeck').addEventListener('click', () => {
+  document.querySelector('cardButton.removeFromDeck').addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
 
     if (currentCardEle) {
@@ -470,7 +182,7 @@ const init = async () => {
       currentCardEle.remove();
     }
   });
-  document.querySelector('cardControl.addToDeck').addEventListener('click', () => {
+  document.querySelector('cardButton.addToDeck').addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
@@ -642,7 +354,7 @@ const init = async () => {
       });
     });
 
-  document.querySelector('cardControl.search').addEventListener('click', async () => {
+  document.querySelector('cardButton.search').addEventListener('click', async () => {
     searchText = prompt('Cards to search for (eg, dodge, spell): ') || '';
 
     if (searchText) {
@@ -651,7 +363,7 @@ const init = async () => {
       cardControlsEle.className = 'searched';
     }
   });
-  document.querySelector('cardControl.clearSearch').addEventListener('click', async () => {
+  document.querySelector('cardButton.clearSearch').addEventListener('click', async () => {
     // apply search within filters?
     searchText = '';
 
