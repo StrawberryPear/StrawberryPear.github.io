@@ -12,107 +12,102 @@
     <script src="./umd.js"></script>
   </head>
 
-  <body class="loading">
+  <body class="loading" showing="deck">
     <nav>
-      <call>Deck Builder</call>
+      <call><span id="title">Deck Builder</span> <span id="points"></span></call>
       <ham></ham>
     </nav>
 
-    <cardScroller class="library">
-      <cardList class="library">
-        <purchase uid="Temple of Justice">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Battle Pigs">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Adventurer Gear">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="The Lone Guard">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Bone and Darkness">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="The Wilderkin">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Wretched Hive">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Lostwood Enclave">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Moldorf Expedition">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Apostels of the Deep">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Kingdoms of Akadh">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Singular Champions 1">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Singular Champions 2">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Singular Champions 3">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Singular Champions 4">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Relics of the Volge">
-          <label>Purchase Cardset, $2.99</label>
-        </purchase>
-        <purchase uid="Storms of Kural">
-          <label>Purchase Cardset, $15.00</label>
-        </purchase>
-        <import uid="Add Own">
-          <label class="fileUpload">Add Cards from PDF<input type='file' /></label>
-        </import>
-      </cardList>
-      <cardList class="deck">
-      </cardList>
-    </cardScroller>
-
-    <cardTopControls>
+    <cardTopControls class="library">
+      <searchContainer>
+        <input type="text" />
+        <searchIcon type="view"></searchIcon>
+        <searchIcon type="clear"></searchIcon>
+      </searchContainer>
+      <topButton class="grid"></topButton>
+      <topButton class="filter">Filter</topButton>
     </cardTopControls>
 
-    <cardTabControls>
-      <cardControl class="library filterAdvocate inactive"></cardControl>
-      <cardControl class="library filterAdversary inactive"></cardControl>
-      <cardControl class="library filterNeutral inactive"></cardControl>
-      <cardControl class="library filterUpgrade inactive"></cardControl>
-      <cardControl class="library filterRelic inactive"></cardControl>
-      <cardControl class="library filterShop inactive"></cardControl>
-      
-      <cardControl class="editing end"></cardControl>
+    <cardScrollerContainer>
+      <cardScroller>
+        <cardList class="library">
+          <purchase uid="Temple of Justice">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Battle Pigs">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Adventurer Gear">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="The Lone Guard">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Bone and Darkness">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="The Wilderkin">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Wretched Hive">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Lostwood Enclave">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Moldorf Expedition">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Apostels of the Deep">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Kingdoms of Akadh">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Singular Champions 1">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Singular Champions 2">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Singular Champions 3">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Singular Champions 4">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Relics of the Volge">
+            <label>Purchase Cardset, $2.99</label>
+          </purchase>
+          <purchase uid="Storms of Kural">
+            <label>Purchase Cardset, $15.00</label>
+          </purchase>
+          <import uid="Add Own">
+            <label class="fileUpload">Add Cards from PDF<input type='file' /></label>
+          </import>
+        </cardList>
+        <cardList class="deck"><add><label>Add Character</label></add></cardList>
+      </cardScroller>
 
-      <cardControl class="deck edit"></cardControl>
-      <cardControl class="deck erase"></cardControl>
-
-      <cardControl class="deck shiftUp"></cardControl>
-      <cardControl class="deck shiftDown"></cardControl>
-    </cardTabControls>
+      <cardCarousel>
+        <canvas></canvas>
+      </cardCarousel>
+    </cardScrollerContainer>
 
     <cardButtons>
       <cardButton class="deck removeFromDeck">Remove</cardButton>
+      <cardButton class="deck showLibrary">Show Library</cardButton>
 
+      <cardButton class="library showDeck">Return</cardButton>
       <cardButton class="library addToDeck">Add to Deck</cardButton>
-      <cardButton class="library search">Search</cardButton>
-      <cardButton class="library clearSearch">Clear Search</cardButton>
     </cardButtons>
 
     <toast></toast>
-
+<!-- 
     <foot>
       <footControl class="showLibrary">Library</footControl>
       <footControl class="showDeck">Deck <span id="points"></span></footControl>
-    </foot>
+    </foot> -->
     
     <helpOverlay class="hidden">
       <helpMedalion></helpMedalion>
@@ -137,6 +132,7 @@
     <script src="./store.js"></script>
     <script src="./load.js"></script>
     <script src="./filters.js"></script>
+    <script src="./carousel.js"></script>
     <script src="./base.js"></script>
   </body>
 </html>

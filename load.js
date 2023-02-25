@@ -1,4 +1,3 @@
-
 const getCardLibraryPlacementBeforeEle = (placeCard) => {
   const libraryCardEles = [...cardLibraryListEle.children];
 

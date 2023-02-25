@@ -27,7 +27,7 @@ const updateDeck = () => {
 const cardScrollerEle = document.querySelector('cardScroller');
 const cardLibraryListEle = document.querySelector('cardList.library');
 const cardDeckListEle = document.querySelector('cardList.deck');
-const cardControlsEle = document.querySelector('cardControls');
+const cardTopControlsEle = document.querySelector('cardTopControls');
 
 const getCurrentCardEle = (canBePurchase) => {
   const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
@@ -67,6 +67,14 @@ const showToast = (() => {
 
 // initialize the database.
 const init = async () => {
+  const updateAppSize = () => {
+    const doc = document.documentElement;
+    doc.style.setProperty('--screen-height', `${window.innerHeight}px`);
+    doc.style.setProperty('--screen-width', `${window.innerWidth}px`);
+  }
+  window.addEventListener('resize', updateAppSize)
+  updateAppSize()
+
   database = await idb.openDB('relicbladeCards', 2, {
     upgrade: (db, oldVersion) => {
       if (oldVersion == 1) {
@@ -87,6 +95,10 @@ const init = async () => {
     loadCard(card);
   }
 
+  applyFilters();
+  applyCarousel();
+  document.body.className = '';
+
   [...document.querySelectorAll('label.fileUpload')].map(ele => ele.addEventListener('click', event => {
     overlayMenuEle.className = 'hidden';
   }));
@@ -106,6 +118,7 @@ const init = async () => {
             await loadCardsFromUrl(reader.result);
 
             applyFilters();
+            applyCarousel();
           } finally {
             document.body.className = '';
           }
@@ -127,42 +140,42 @@ const init = async () => {
 
   for (const cardId of deck) {
     const cardEle = initialLibraryCardEles.find(ele => ele.getAttribute('uid') == cardId);
-    
     if (!cardEle) continue;
-    const cardCloneEle = cardEle.cloneNode(true);
 
-    cardDeckListEle.append(cardCloneEle);
+    const cardCloneEle = cardEle.cloneNode(true);
+    cardDeckListEle.insertBefore(cardCloneEle, cardDeckListEle.lastChild);
   }
 
   applyFilters();
+  applyCarousel();
 
   const cardScroller = document.querySelector('cardScroller');
 
   var libraryFocusCard;
   var deckFocusCard;
 
-  document.querySelector('footControl.showLibrary').addEventListener('click', () => {
+  document.querySelector('.showLibrary').addEventListener('click', () => {
     document.body.className = '';
 
-    if (cardScroller.className !== 'deck') return;
+    if (document.body.getAttribute("showing") !== 'deck') return;
     const currentCard = getCurrentCardEle(true);
 
     deckFocusCard = currentCard;
 
     // scroll to the last library focused' card
-    cardScroller.className = 'library';
+    document.body.setAttribute("showing", "library");
 
     const cardScrollX = libraryFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
   });
-  document.querySelector('footControl.showDeck').addEventListener('click', () => {
-    if (cardScroller.className !== 'library') return;
+  document.querySelector('.showDeck').addEventListener('click', () => {
+    if (document.body.getAttribute("showing") !== 'library') return;
     const currentCard = getCurrentCardEle(true);
 
     libraryFocusCard = currentCard;
 
     // scroll to the last library focused' card
-    cardScroller.className = 'deck';
+    document.body.setAttribute("showing", "deck");
 
     const cardScrollX = deckFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
@@ -195,41 +208,11 @@ const init = async () => {
     showToast(`Card added to deck`);
     localStorage.setItem('deck', deck);
   });
-  document.querySelector('cardControl.shiftUp').addEventListener('click', () => {
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
+  document.querySelector("cardScroller").addEventListener('click', (e) => {
+    // get the card that was clicked
 
-    const previousCardEle = currentCardEle.previousElementSibling;
-    if (!previousCardEle) return;
-
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
-    const previousCardIndex = currentCardIndex - 1;
-
-    deck[currentCardIndex] = previousCardEle.getAttribute('uid');
-    deck[previousCardIndex] = currentCardEle.getAttribute('uid');
-
-    localStorage.setItem('deck', deck);
+    // if it's a grid, convert it to a non-grid with that card in view
     
-    cardDeckListEle.insertBefore(currentCardEle, previousCardEle);
-  });
-  document.querySelector('cardControl.shiftDown').addEventListener('click', () => {
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
-
-    const nextCardEle = currentCardEle.nextElementSibling;
-    if (!nextCardEle) return;
-
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
-    const nextCardIndex = currentCardIndex + 1;
-
-    deck[currentCardIndex] = nextCardEle.getAttribute('uid');
-    deck[nextCardIndex] = currentCardEle.getAttribute('uid');
-
-    localStorage.setItem('deck', deck);
-    
-    cardDeckListEle.insertBefore(nextCardEle, currentCardEle);
-  });
-  document.querySelector("cardScroller").addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle(true);
     if (!currentCardEle) return;
 
@@ -242,135 +225,23 @@ const init = async () => {
     }
   });
 
-  const handleEdit = () => {
-    document.body.className = 'editing';
-    
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
-
-    var canvasEle = currentCardEle.querySelector('canvas');
-    if (canvasEle) return;
-
-    canvasEle = document.createElement('canvas');
-
-    canvasEle.width = CARD_WIDTH;
-    canvasEle.height = CARD_HEIGHT;
-    
-    currentCardEle.append(canvasEle);
-
-    const canvasBoundingBox = canvasEle.getBoundingClientRect();
-
-    const canvasContext = canvasEle.getContext('2d');
-
-    var cx = 0;
-    var cy = 0;
-
-    var lineWidth = 8;
-    var color = '#000000';
-
-    const getXY = (e) => {
-      const rx = (e.touches[0].clientX - canvasBoundingBox.left) * CARD_WIDTH / canvasBoundingBox.width;
-      const ry = (e.touches[0].clientY - canvasBoundingBox.top) * CARD_HEIGHT / canvasBoundingBox.height;
-
-      return [rx, ry];
-    };
-
-    const drawTo = (nx, ny) => {
-      const drawType = document.body.getAttribute('drawType');
-
-      if (drawType == 'erase') {
-        canvasContext.save();
-        canvasContext.globalCompositeOperation = 'destination-out';
-        canvasContext.beginPath();
-        canvasContext.arc(nx, ny, lineWidth, 0, 2 * Math.PI);
-        canvasContext.fillStyle = color;
-        canvasContext.fill();
-        canvasContext.closePath();
-        canvasContext.restore();
-      } else {
-        canvasContext.beginPath();
-        canvasContext.arc(nx, ny, lineWidth, 0, 2 * Math.PI);
-        canvasContext.fillStyle = color;
-        canvasContext.fill();
-        canvasContext.closePath();
-      }
-
-      [cx, cy] = [nx, ny];
-    };
-
-    canvasEle.addEventListener('touchmove', function (e) {
-      const [nx, ny] = getXY(e);
-
-      drawTo(nx, ny);
-
-      e.preventDefault();
-    }, false);
-    canvasEle.addEventListener('touchstart', function (e) {
-      [cx, cy] = getXY(e);
-
-      drawTo(cx, cy);
-
-      e.preventDefault();
-    }, false);
-    canvasEle.addEventListener('touchend', function (e) {
-      e.preventDefault();
-    }, false);
-    canvasEle.addEventListener('touchcancel', function (e) {
-      const [nx, ny] = getXY(e);
-
-      drawTo(nx, ny);
-
-      e.preventDefault();
-    }, false);
-  };
-
-  document.querySelector('cardControl.edit').addEventListener('click', () => {
-    document.body.setAttribute('drawType', 'draw');
-
-    handleEdit();
-  });
-
-  document.querySelector('cardControl.erase').addEventListener('click', () => {
-    document.body.setAttribute('drawType', 'erase');
-
-    handleEdit();
-  });
-
-  document.querySelector('cardControl.end').addEventListener('click', () => {
-    document.body.className = '';
-  });
-
-  Object.keys(filters)
-    .forEach(key => {
-      const object = filters[key];
-      object.ele.addEventListener('click', () => {
-        const startsInactive = object.ele.classList.contains('inactive');
-        object.ele.classList.toggle('inactive');
-    
-        const isActive = !!startsInactive;
-        object.active = isActive;
-        
-        applyFilters();
-      });
-    });
-
-  document.querySelector('cardButton.search').addEventListener('click', async () => {
-    searchText = prompt('Cards to search for (eg, dodge, spell): ') || '';
-
-    if (searchText) {
-      applyFilters();
-
-      cardControlsEle.className = 'searched';
-    }
-  });
-  document.querySelector('cardButton.clearSearch').addEventListener('click', async () => {
-    // apply search within filters?
-    searchText = '';
+  const searchInputEle = document.querySelector('searchContainer input');
+  searchInputEle.addEventListener('keyup', async () => {
+    searchText = searchInputEle.value;
 
     applyFilters();
+    applyCarousel();
 
-    cardControlsEle.className = '';
+    cardTopControlsEle.classList.toggle('searched', !!searchText);
   });
+  document.querySelector('searchContainer searchicon[type="clear"]').addEventListener("click", () => {
+    searchText = "";
+    searchInputEle.value = "";
+
+    applyFilters();
+    applyCarousel();
+    cardTopControlsEle.classList.toggle('searched', !!searchText);
+  })
 
   document.querySelector('menuControl.removeLibraryCard').addEventListener('click', async (e) => {
     overlayMenuEle.className = 'hidden';
@@ -405,6 +276,16 @@ const init = async () => {
   document.querySelector('ham').addEventListener('click', () => {
     overlayMenuEle.className = '';
   });
+
+  document.querySelector('topButton.grid').addEventListener('click', () => {
+    const currentDisplayType = document.body.getAttribute("displayType");
+
+    document.body.setAttribute("displayType", currentDisplayType == 'grid' ? '' : 'grid');
+  });
+
+  cardScrollerEle.addEventListener("scroll", event => {
+    updateCarousel();
+  })
 };
 
 init();

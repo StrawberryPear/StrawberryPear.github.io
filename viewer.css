@@ -3,11 +3,18 @@
   src: url('./assets/trade-winds.ttf');
 }
 :root {
-  --card-width: min(80vw, calc(80vh - 104px) * (269 / 367));
-  --card-height: calc(var(
-  --card-width) * (367 / 269) * 1.03);
-  --offset-top: max(0px, 60vh - calc(var(
-  --card-height)));
+  --screen-width: 100%;
+  --screen-height: 100%;
+
+  --card-base-width: 269;
+  --card-base-height: 367;
+
+  --card-width:
+  min(0.8 * var(--screen-width), calc(0.8 * var(--screen-height) - 104px) * (var(--card-base-width) / var(--card-base-height)));
+  --card-height:
+  calc(var(--card-width) * (var(--card-base-height) / var(--card-base-width)) * 1.03);
+  --offset-top:
+  max(0px, 0.6 * var(--screen-height) - calc(var(--card-height)));
   --nav-height: 48px;
   --foot-height: 44px;
 }
@@ -16,21 +23,26 @@ body {
   height: 100%;
   width: 100%;
   background: #091e21;
-  padding-top: calc(var(--nav-height) + 12px);
-  padding-bottom: var(--foot-height);
   font-family: "proxima-nova","Helvetica Neue",Helvetica,Arial,sans-serif;
   color: #fff;
   box-sizing: border-box;
+  position: fixed;
+  height: calc(var(--screen-height));
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: space-between;
 }
 cardScroller {
   display: block;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   scroll-snap-type: x mandatory;
   overflow-x: scroll;
+  flex-grow: 1;
   -ms-overflow-style: none;
   scrollbar-width: none;
-  padding-top: var(--offset-top);
-  height: calc(var(--screen-height) - var(--nav-height) - var(--foot-height));
+  position: relative;
 }
 body.editing cardScroller {
   user-select: none;
@@ -49,8 +61,10 @@ cardList {
   display: inline-flex;
   padding: 0 50%;
   height: 100%;
+  align-items: center;
+  box-sizing: border-box;
 }
-card, purchase, import {
+card, purchase, import, add {
   position: relative;
   width:var(--card-width);
   height: var(--card-height);
@@ -63,12 +77,11 @@ card, purchase, import {
   margin: 0 min(2vw, 20px);
   scroll-snap-align: center;
 }
-purchase, import {
+purchase, import, add {
   height:var(--card-width);
   border-radius: 0;
-  margin-top: calc((var(--card-height) - var(--card-width)) * 0.25);
 }
-purchase label, import label, purchase.bought::after {
+purchase label, import label, add label {
   position: absolute;
   bottom: 10%;
   box-sizing: border-box;
@@ -79,15 +92,12 @@ purchase label, import label, purchase.bought::after {
   text-align: center;
   font-size: 20px;
 }
-purchase.bought label {
+purchase.bought {
   display: none;
-}
-purchase.bought::after {
-  content: 'Already Owned';
 }
 import {
   background-image: url('./assets/cardpacks/import.jpg');
-}
+} 
 purchase[uid="Lostwood Enclave"] {
   background-image: url('./assets/cardpacks/Lostwood-Enclave-Faction-Set.jpg');
 }
@@ -102,7 +112,7 @@ purchase[uid="Adventurer Gear"] {
 }
 purchase[uid="The Lone Guard"] {
   background-image: url('./assets/cardpacks/Lone-Guard-Faction-Set.jpg');
-}
+} 
 purchase[uid="Bone and Darkness"] {
   background-image: url('./assets/cardpacks/Bone-and-Darkness-Faction-Set.jpg');
 }
@@ -154,7 +164,6 @@ card canvas {
 }
 nav {
   display: flex;
-  position: fixed;
   top: 0px;
   left: 0px;
   width: 100%;
@@ -184,12 +193,8 @@ ham {
   background-repeat: no-repeat;
 }
 
-cardScroller.library ~ cardButtons cardButton.deck,
-cardScroller.deck ~ cardButtons cardButton.library,
-cardScroller.library ~ cardTabControls cardControl.deck,
-cardScroller.deck ~ cardTabControls cardControl.library,
-cardScroller.library ~ cardTopControls cardControl.deck,
-cardScroller.deck ~ cardTopControls cardControl.library,
+body[showing="library"] .deck,
+body[showing="deck"] .library,
 body.editing cardTabControls cardControl.deck,
 body:not(.editing) cardTabControls cardControl.editing {
   display: none;
@@ -197,25 +202,38 @@ body:not(.editing) cardTabControls cardControl.editing {
 
 cardTabControls {
   display: flex;
-  position: absolute;
-  top: calc(var(--offset-top) + 76px);
-  left: calc(50vw + var(--card-width) * 0.5 - min(6vh, 80px) + 34px);
+  position: fixed;
+  top: calc(50% - var(--card-height) * 0.5);
+  left: calc(var(--screen-width) * 0.5 + var(--card-width) * 0.5);
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: flex-end;
-  /* pointer-events: none; */
+  height: var(--card-height);
+  transform: translateX(-33%);
 }
-cardTabControls cardControl, cardTopControls {
+cardTopControls{
+  display: flex;
+  top: calc(var(--nav-height));
+  left: 0px;
+  flex-direction: row;
+  /* pointer-events: none; */
+  flex-wrap: nowrap;
+  align-items: stretch;
+  background: rgb(8 23 25);
+  font-size: 16px;
+}
+cardControl {
   position: relative;
-  width: min(6vh, 80px);
-  height: min(6vh, 80px);
+  width: min(calc(0.06 * var(--screen-height)), 80px);
+  height: min(calc(0.06 * var(--screen-height)), 80px);
   margin-bottom: 12px;
   background-size: 100%;
   background-repeat: no-repeat;
   background-position: center;
   background-image: url('./assets/controlBack.png');
+  pointer-events: all;
 }
-cardTabControls cardControl::before {
+cardControl::before {
   content:'';
   display:block;
   position: absolute;
@@ -227,42 +245,39 @@ cardTabControls cardControl::before {
   background-repeat: no-repeat;
   background-position: center;
 }
-cardTabControls cardControl.edit {
-  margin-top: 32px;
-}
-cardTabControls cardControl.edit::before {
+cardControl.edit::before {
   background-image: url('./assets/edit.png');
   background-size: 60%;
 }
-cardTabControls cardControl.end::before {
+cardControl.end::before {
   background-image: url('./assets/end.png');
 }
-cardTabControls cardControl.erase {
+cardControl.erase {
   margin-bottom: 32px;
 }
-cardTabControls cardControl.erase::before {
+cardControl.erase::before {
   background-image: url('./assets/erase.png');
   background-size: 60%;
 }
-cardTabControls cardControl.shiftUp::before {
+cardControl.shiftUp::before {
   background-image: url('./assets/left.png');
 }
-cardTabControls cardControl.shiftDown::before {
+cardControl.shiftDown::before {
   background-image: url('./assets/right.png');
 }
-cardTabControls cardControl.destroy {
+cardControl.destroy {
   margin-bottom: 48px;
 }
-cardTabControls cardControl.destroy::before {
+cardControl.destroy::before {
   background-image: url('./assets/destroy.png');
 }
 
-cardTabControls cardControl.filterAdvocate::before,
-cardTabControls cardControl.filterAdversary::before,
-cardTabControls cardControl.filterNeutral::before,
-cardTabControls cardControl.filterUpgrade::before,
-cardTabControls cardControl.filterRelic::before,
-cardTabControls cardControl.filterShop::before {
+cardControl.filterAdvocate::before,
+cardControl.filterAdversary::before,
+cardControl.filterNeutral::before,
+cardControl.filterUpgrade::before,
+cardControl.filterRelic::before,
+cardControl.filterShop::before {
   content: 'U';
   display: flex;
   justify-content: center;
@@ -283,19 +298,19 @@ cardControl.inactive {
   filter: contrast(0.55);
 }
 
-cardTabControls cardControl.filterAdvocate::before {
+cardControl.filterAdvocate::before {
   content: 'G';
 }
-cardTabControls cardControl.filterAdversary::before {
+cardControl.filterAdversary::before {
   content: 'E';
 }
-cardTabControls cardControl.filterNeutral::before {
+cardControl.filterNeutral::before {
   content: 'N';
 }
-cardTabControls cardControl.filterRelic::before {
+cardControl.filterRelic::before {
   content: 'R';
 }
-cardTabControls cardControl.filterShop::before {
+cardControl.filterShop::before {
   font-size: 30px;
   content: '$';
 }
@@ -304,21 +319,21 @@ cardTabControls cardControl.filterShop::before {
 cardButtons {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  position: absolute;
+  grid-template-rows: 1fr;
   text-align: center;
-  bottom: calc(var(--foot-height) + 2vh);
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
   justify-items: center;
+  margin-bottom: calc(var(--screen-height) * 0.01);
+  align-items: end;
 }
 
 cardButton {
   position: relative;
   display: flex;
-  grid-column: 2;
+  grid-column: 1;
+  grid-row: 1;
   background: url(./assets/add-remove.png);
-  height: calc(min(128px, 17vh) * 0.5);
+  height: min(64px, calc(0.085 * var(--screen-height)));
   width: calc(100% - 2vw);
   background-size: 100%;
   background-position: center;
@@ -327,7 +342,7 @@ cardButton {
   align-content: flex-end;
   justify-content: center;
   font-family: 'tradeWinds';
-  font-size: min(16px, calc(8px + 1vh));
+  font-size: min(16px, calc(8px + 0.01 * var(--screen-height)));
   align-items: center;
 }
 cardButton::before {
@@ -347,9 +362,6 @@ cardButton.clearSearch {
 }
 
 foot {
-  position: fixed;
-  bottom: 0px;
-  left: 0px;
   width: 100%;
   height: var(--foot-height);
   display: flex;
@@ -357,6 +369,7 @@ foot {
   flex-wrap: nowrap;
   justify-content: space-between;
   align-items: center;
+  display: none;
 }
 foot footControl {
   display: inline-block;
@@ -413,8 +426,8 @@ helpOverlay.hidden {
 toast {
   position: absolute;
   top: 50%;
-  height: min(128px, 17vh);
-  width: calc(min(128px, 17vh) * 3);
+  height: min(128px, calc(0.17 * var(--screen-height)));
+  width: calc(min(384px, calc(0.17 * var(--screen-height)) * 3));
   left:  50%;
   transform: translate(-50%, -50%);
   background: url('./assets/toastBack.png');
@@ -489,4 +502,112 @@ menuControl, .menuControl {
   font-family: 'tradeWinds';
   margin-top:24px;
   text-decoration: underline;
+}
+
+searchContainer {
+    flex-grow: 1;
+    position: relative;
+}
+
+searchContainer input[type="text"] {
+    width: 100%;
+    background: none;
+    box-sizing: border-box;
+    border: none;
+    position: relative;
+    padding: 6px 32px;
+    color: white;
+    font-size: inherit;
+}
+
+searchicon {position: absolute;display: block;top: 50%;left: 16px;width: 24px;height: 24px;transform: translate(-50%, -50%);background-image: url('./assets/search.png');background-size: contain;background-position: center;background-repeat: no-repeat;pointer-events: none;}
+
+topButton {
+    position: relative;
+    width: calc(var(--screen-width) * 0.25);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'tradeWinds';
+    background: #041011;
+}
+
+topbutton.grid {
+    width: 49px;
+    background-image: url('./assets/grid.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+searchicon[type="clear"] {
+    left: calc(100% - 16px);
+    background-image: url('./assets/end.png');
+    pointer-events: all;
+}
+
+cardTopControls:not(.searched) searchicon[type="clear"] {
+  display: none;
+}
+
+cardbutton.addToDeck {
+    grid-column: 3;
+}
+
+cardbutton.removeFromDeck {
+    grid-column: 2;
+}
+
+body[displayType="grid"] cardlist.library {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    align-content: center;
+    grid-template-rows: repeat(auto-fill, calc(var(--card-height) * 0.45 + var(--screen-height) * 0.01));
+    grid-auto-flow: column;
+}
+
+body[displayType="grid"] cardlist.library card {
+    width: calc(var(--card-width) * 0.45);
+    height: calc(var(--card-height) * 0.45);
+    /* transform: scale(0.5); */
+    margin: 0 min(1vw, 10px);
+}
+body[displayType="grid"] cardlist.library purchase,
+body[displayType="grid"] cardlist.library import {
+    width: calc(var(--card-width) * 0.5);
+    height: calc(var(--card-width) * 0.5);
+}
+body[displayType="grid"] cardlist.library purchase label,
+body[displayType="grid"] cardlist.library import label {
+    font-size:12px
+}
+
+cardCarousel {
+    position: absolute;
+    display: block;
+    width: calc(100% - 2vw);
+    height: calc(var(--card-height) * 0.125);
+    left: 1vw;
+    top: calc(50% + var(--card-height) * 0.5);
+    margin-top: calc(var(--screen-height) * 0.01);
+    background: url('./assets/toastBack.png');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    mask: url('./assets/toastBack.png');
+    -webkit-mask-size: 100%;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-image: url('./assets/toastBack.png');
+    -webkit-mask-position: center;
+}
+
+cardScrollerContainer {
+    display: block;
+    width: 100vw;
+    flex-grow: 1;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    position: relative;
 }

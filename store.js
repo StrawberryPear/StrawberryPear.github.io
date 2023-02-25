@@ -1,4 +1,4 @@
-const store = {
+const store_ = {
   "Add Own": "Purchase",
   "Temple of Justice": "Temple of Justice Questing Knight Cleric of Justice Thief advocate Purchase",
   "Lostwood Enclave": "Lostwood Enclave Wild Elf Druid Cave Bear Arboleth Sentinel Wild Elf Pathfinder advocate Purchase",
@@ -55,14 +55,14 @@ const store = {
   "Bone and Darkness AI - 5": "Mark of Violence Darkness Deadly Magical 2 Upgrade",
   "Bone and Darkness AI - 6": "Bone Harvest Darkness Spell Health Range 3 Upgrade",
   "Bone and Darkness AI - 7": "Black Shroud Darkness Spell Armor Range 1 Upgrade",
-  "Bone and Darkness AI - 8": "Dark Machination Darkness Tactic 5 Upgrade",
-  "Bone and Darkness AI - 9": "Murder of Crows Darkness Two Uses Tactic Dodge 2 Upgrade",
+  "Bone and Darkness AI - 8": "Dark Machination Darkness 5 Upgrade",
+  "Bone and Darkness AI - 9": "Murder of Crows Darkness Two Uses Dodge 2 Upgrade",
   "Kingdoms of Akadh - 0": "Akadh Magician Range Wizard Goblin Small Rider 16 Neutral Character",
   "Kingdoms of Akadh - 1": "Magic Carpet Range  Small Medium Mount 10 Neutral Character",
   "Kingdoms of Akadh - 2": "Water Elemental Construct Push Range Beam Elemental Empowered 20 Neutral Character",
   "Kingdoms of Akadh - 3": "Akadh Speargobs Range Recovery Team Shield Goblin 18 Neutral Character",
   "Kingdoms of Akadh - 4": "Elemental Core Wizard Construct Empower Spell 2 Upgrade",
-  "Kingdoms of Akadh - 5": "Construct Battery Construct Empower Tactic 1 Upgrade",
+  "Kingdoms of Akadh - 5": "Construct Battery Construct Empower 1 Upgrade",
   "Kingdoms of Akadh - 6": "Goboverry Juice Single Use Range Move 1 Upgrade",
   "Kingdoms of Akadh - 7": "Born to Ride Mount 2 Upgrade",
   "Kingdoms of Akadh - 8": "Disenchant Spell Wizard Range 1 Upgrade",
@@ -71,7 +71,7 @@ const store = {
   "Lostwood Enclave - 1": "Wild Elf Druid Range Nature Druid Transform Bind 26 Advocate Character",
   "Lostwood Enclave - 2": "Cave Bear Wild Elf Druid Beast Transform 0 Advocate Character",
   "Lostwood Enclave - 3": "Wild Elf Pathfinder Range Place Climb Nature Scout 21 Advocate Character",
-  "Lostwood Enclave - 4": "Brawler Bonus Die Tactic 2 Upgrade",
+  "Lostwood Enclave - 4": "Brawler Bonus Die 2 Upgrade",
   "Lostwood Enclave - 5": "True Grid Recovery 2 Upgrade",
   "Lostwood Enclave - 6": "Pendant Beast Single Use Damage Bonus 1 Upgrade",
   "Lostwood Enclave - 7": "Bark Skin Druid Armor Range 2 Upgrade",
@@ -83,7 +83,7 @@ const store = {
   "Moldorf Expedition - 3": "moldorf shadowfoot range dodge rogue 23 neutral character",
   "Moldorf Expedition - 4": "arcane protection wizard dodge token spell range 1 upgrade",
   "Moldorf Expedition - 5": "mirror image illusion range spell 2 upgrade",
-  "Moldorf Expedition - 6": "cosmic essence two uses tactic 1 upgrade",
+  "Moldorf Expedition - 6": "cosmic essence two uses 1 upgrade",
   "Moldorf Expedition - 7": "spellbook witch wizard focus 1 upgrade",
   "Moldorf Expedition - 8": "combat superiority fighter bonus die 3 upgrade",
   "Moldorf Expedition - 9": "smoke bomb rogue range single use 2 upgrade",
@@ -96,13 +96,13 @@ const store = {
   "Singular Champions 1 - 6": "Vermin mouth bonus damage pig 20 adversary character",
   "Singular Champions 1 - 7": "Vermin Mouth rat swarm summon dire recover adversary",
   "Singular Champions 1 - 8": "Ogre ratarius range dodge recover fighter 26 character adversary",
-  "Singular Champions 1 - 9": "veteran's edge reroll tactic 1 upgrade",
+  "Singular Champions 1 - 9": "veteran's edge reroll 1 upgrade",
   "Singular Champions 1 - 10": "iguan assassin range dodge recover rogue 23 adversary character",
   "Singular Champions 1 - 11": "neurotoxin rogue dagger poison 2 upgrade",
   "Singular Champions 2 - 0": "Flame bearer range stun beam move wizard 26 advocate character",
   "Singular Champions 2 - 1": "Elemental smite witch wizard two uses stun range spell 2 upgrade",
   "Singular Champions 2 - 2": "Lone Guard Commander Dodge Range Warlord Shield fighter 30 advocate character",
-  "Singular Champions 2 - 3": "champion tactic 2 upgrade",
+  "Singular Champions 2 - 3": "champion 2 upgrade",
   "Singular Champions 2 - 4": "bounty hunter range dodge scout fighter 23 advocate character",
   "Singular Champions 2 - 5": "combat mobility dodge token move 1 upgrade",
   "Singular Champions 2 - 6": "Bone fury range move wounded bone beast flying climb jump 16 adversary character",
@@ -123,14 +123,14 @@ const store = {
   "Storms of Kural cards - 11": "",
   "Storms of Kural cards - 12": "alchemical munitions damage bonus ranged 4 upgrade",
   "Storms of Kural cards - 13": "bastion shield armor dodge 3 upgrade",
-  "Storms of Kural cards - 14": "blade oil single use difficulty tactic 1 upgrade",
+  "Storms of Kural cards - 14": "blade oil single use difficulty 1 upgrade",
   "Storms of Kural cards - 15": "cloak of concealment armor ranged 2 upgrade",
-  "Storms of Kural cards - 16": "corrosive vial single use armor range tactic 1 upgrade",
+  "Storms of Kural cards - 16": "corrosive vial single use armor range 1 upgrade",
   "Storms of Kural cards - 17": "cyclone witch single use move place 3 spell upgrade",
   "Storms of Kural cards - 18": "quicksilver bangles move charge 2 upgrade tactic",
   "Storms of Kural cards - 19": "gauntlets of strength push move 1 upgrade",
   "Storms of Kural cards - 20": "Heavy armor fighter knight armor 4 upgrade",
-  "Storms of Kural cards - 21": "healing herb single use recover health tactic 1 upgrade",
+  "Storms of Kural cards - 21": "healing herb single use recover health 1 upgrade",
   "Storms of Kural cards - 22": "inner mastery difficulty 1 upgrade",
   "Storms of Kural cards - 23": "magic lantern bonus die 1 upgrade tactic",
   "Storms of Kural cards - 24": "noxious bomb single use dodge token range 1 upgrade",
@@ -153,8 +153,8 @@ const store = {
   "Temple of Justice - 5": "healing prayer holy two uses recover health spell range 3 upgrade",
   "Temple of Justice - 6": "sigil of justice cleric armor critically 2 upgrade",
   "Temple of Justice - 7": "writ of justice knight cleric single use destroy 1 upgrade tactic",
-  "Temple of Justice - 8": "riposte knight dodge tactic 3 upgrade",
-  "Temple of Justice - 9": "sword master knight bonus ad tactic 2 upgrade",
+  "Temple of Justice - 8": "riposte knight dodge 3 upgrade",
+  "Temple of Justice - 9": "sword master knight bonus ad 2 upgrade",
   "Temple of Justice - 10": "dive attack rogue damage 1 upgrade",
   "Temple of Justice - 11": "nimble armor rogue 2 upgrade",
   "Temple of Justice - 12": "distraction range rogue armor 2 upgrade tactic",
@@ -162,10 +162,10 @@ const store = {
   "The Lone Guard 19 - 1": "lone guard ranger range bound nature scout 21 advocate character",
   "The Lone Guard 19 - 2": "lone guard warrior stun recover shield fighter 23 advocate character",
   "The Lone Guard 19 - 3": "sabertooth bind beast companion 5 advocate character",
-  "The Lone Guard 19 - 4": "bold advance fighter move tactic 2 upgrade",
+  "The Lone Guard 19 - 4": "bold advance fighter move 2 upgrade",
   "The Lone Guard 19 - 5": "indomitable guard fighter dodge token 1 upgrade",
   "The Lone Guard 19 - 6": "outflank scout deploy 1 upgrade tactic",
-  "The Lone Guard 19 - 7": "quickshot tactic range 2 upgrade",
+  "The Lone Guard 19 - 7": "quickshot range 2 upgrade",
   "The Lone Guard 19 - 8": "spear trap scout bind 2 upgrade tactic",
   "The Lone Guard 19 - 9": "hand axe upgrade 1",
   "Wretched Hive - 0": "iguanan poacher range deadly bound scout 23 character adversary",
@@ -177,7 +177,7 @@ const store = {
   "Wretched Hive - 6": "blood poisoning witch recovery range spell 2 upgrade",
   "Wretched Hive - 7": "neolithic effigy armor magic 2 upgrade",
   "Wretched Hive - 8": "sludge mire witch spell range 2 upgrade",
-  "Wretched Hive - 9": "dart trap tactic poison deadly 2 upgrade",
+  "Wretched Hive - 9": "dart trap poison deadly 2 upgrade",
   "The Wilderkin - 0": "Stonekin Battleborn beam armor barbarian 23 character advocate",
   "The Wilderkin - 1": "gnome alchemist range poison recover health small rider mount 13 character advocate",
   "The Wilderkin - 2": "shadow fox place small mount rider beast 10 character advocate",
@@ -221,5 +221,35 @@ const store = {
   "Singular Champions 4 - 6": "Shrimp Harpooners range armor team goblin 14 adversary character",
   "Singular Champions 4 - 7": "Bind Breaker bind 1 upgrade",
   "Singular Champions 4 - 8": "Lotus Bladesong dire dodge armor knight lotus 26 neutral character",
-  "Singular Champions 4 - 9": "Knightly Challenge knight armor tactic 2 upgrade",
-}
+  "Singular Champions 4 - 9": "Knightly Challenge knight armor 2 upgrade",
+};
+
+const store = Object.keys(store_).map(key => {
+  const base = store_[key].toLowerCase();
+  const cost = `${base.match(/\-*\d+/) || 0}`;
+  
+  const CLASSES = "druid earth cleric holy shield pig darkness bone deep witch wizard illusion scout fighter barbarian nature elemental beast warlord goblin knight demon smith rogue".split(" ");
+
+  const KEYWORDS = "summon destroy charge tactic critical tactics disengage bound token transform critically ranged jump token engage health place poison companion single stun heal recover spell reroll tactic team dodge armor range deadly dire two uses three uses one use push move beam climb small medium mount rider focus construct upkeep bind bonus die dagger spell damage bonus difficulty ad recovery scenario magical".split(" ");
+
+  const FACTIONS = "advocate adversary neutral".split(" ");
+
+  const TYPES = "character upgrade relic purchase".split(" ");
+
+  const classes = CLASSES.filter(c => base.includes(c));
+  const keywords = KEYWORDS.filter(k => base.includes(k));
+  const factions = FACTIONS.filter(f => base.includes(f));
+  const types = TYPES.filter(t => base.includes(t));
+
+  const remainingWords = base.split(" ").filter(w => ![cost, ...classes, ...keywords, ...factions, ...types].includes(w));
+  
+  return {
+      uid: key,
+      base,
+      name: remainingWords.join(" "),
+      classes,
+      keywords,
+      types,
+      factions
+  };
+});

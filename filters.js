@@ -8,34 +8,34 @@ const filterShopEle = document.querySelector('cardControl.filterShop');
 var searchText = '';
 const filters = {
   advocate: {
-    ele: filterAdvocateEle,
+    name: 'Advocate',
     filter: /advocate/i,
-    active: false
+    icon: false
   },
   adversary: {
-    ele: filterAdversaryEle,
+    name: 'Adversary',
     filter: /adversary/i,
-    active: false
+    icon: false
   },
   neutral: {
-    ele: filterNeutralEle,
+    name: 'Neutral',
     filter: /neutral/i,
-    active: false
+    icon: false
   },
   upgrade: {
-    ele: filterUpgradeEle,
+    name: 'Upgrade',
     filter: /upgrade/i,
-    active: false
+    icon: false
   },
   relic: {
-    ele: filterRelicEle,
+    name: 'Relic',
     filter: /relic/i,
-    active: false
+    icon: false
   },
   shop: {
-    ele: filterShopEle,
+    name: 'Purchase',
     filter: /purchase/i,
-    active: false
+    icon: false
   }
 };
 
