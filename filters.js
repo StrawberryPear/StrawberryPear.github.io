@@ -58,7 +58,7 @@ const applyFilters = () => {
       return o.active && storeItem.match(o.filter);
     });
 
-    const searchShow = storeItem.toLowerCase().includes(searchText.toLowerCase());
+    const searchShow = storeItem.base.toLowerCase().includes(searchText.toLowerCase());
 
     cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow);
   }

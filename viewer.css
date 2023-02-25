@@ -197,7 +197,7 @@ body[showing="library"] .deck,
 body[showing="deck"] .library,
 body.editing cardTabControls cardControl.deck,
 body:not(.editing) cardTabControls cardControl.editing {
-  display: none;
+  display: none !important;
 }
 
 cardTabControls {
@@ -534,11 +534,11 @@ topButton {
 }
 
 topbutton.grid {
-    width: 49px;
+    width: 38px;
     background-image: url('./assets/grid.png');
     background-position: center;
     background-repeat: no-repeat;
-    background-size: contain;
+    background-size: 58%;
 }
 
 searchicon[type="clear"] {
@@ -585,22 +585,31 @@ body[displayType="grid"] cardlist.library import label {
 }
 
 cardCarousel {
-    position: absolute;
-    display: block;
-    width: calc(100% - 2vw);
-    height: calc(var(--card-height) * 0.125);
-    left: 1vw;
-    top: calc(50% + var(--card-height) * 0.5);
-    margin-top: calc(var(--screen-height) * 0.01);
-    background: url('./assets/toastBack.png');
+    display: none;
+    width: calc(96%);
+    height: calc(var(
+    --card-height) * 0.125);
+    margin-bottom: calc(var(
+    --screen-height) * 0.01);
+    background: url(
+    './assets/toastBack.png');
     background-size: 100%;
     background-repeat: no-repeat;
     background-position: center;
-    mask: url('./assets/toastBack.png');
+    mask: url(
+    './assets/toastBack.png');
     -webkit-mask-size: 100%;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-image: url('./assets/toastBack.png');
     -webkit-mask-position: center;
+    margin-left: 2%;
+    position: relative;
+}
+
+cardCarousel canvas {
+  margin: 3px 16px;
+  width: calc(100% - 32px);
+  height: calc(100% - 6px);
 }
 
 cardScrollerContainer {
@@ -610,4 +619,12 @@ cardScrollerContainer {
     -ms-overflow-style: none;
     scrollbar-width: none;
     position: relative;
+}
+
+body[showing="library"]:not([displayType="grid"]) cardcarousel {
+    display: block;
+}
+
+body[displayType="grid"] topButton.grid {
+    background-image: url('./assets/single.png');
 }

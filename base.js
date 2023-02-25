@@ -17,7 +17,7 @@ var deck = [];
 const updateDeck = () => {
   // work out total points in deck :D
   const cards = deck.map(id => store[id]);
-  const cost = cards.reduce((sum, card) => card ? sum + (parseInt(card.match(/\d+/)) || 0) : sum, 0);
+  const cost = cards.reduce((sum, card) => card ? sum + (parseInt(card.cost) || 0) : sum, 0);
 
   const deckCostEle = document.getElementById('points');
 
@@ -165,6 +165,8 @@ const init = async () => {
     // scroll to the last library focused' card
     document.body.setAttribute("showing", "library");
 
+    applyCarousel();
+
     const cardScrollX = libraryFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
   });
@@ -210,6 +212,24 @@ const init = async () => {
   });
   document.querySelector("cardScroller").addEventListener('click', (e) => {
     // get the card that was clicked
+    const cardEle = e.target;
+
+    if (!["CARD", "PURCHASE", "IMPORT"].includes(cardEle.tagName)) {
+      // not a valid type;
+      return;
+    }
+
+    if (document.body.getAttribute("displayType") == "grid") {
+      // target the new card and swap display type
+      document.body.setAttribute("displayType", "");
+
+      applyCarousel();
+
+      const scrollLeft = cardEle.offsetLeft;
+      cardScroller.scrollTo(scrollLeft, 0);
+
+      return;
+    }
 
     // if it's a grid, convert it to a non-grid with that card in view
     
@@ -281,11 +301,28 @@ const init = async () => {
     const currentDisplayType = document.body.getAttribute("displayType");
 
     document.body.setAttribute("displayType", currentDisplayType == 'grid' ? '' : 'grid');
+
+    if (currentDisplayType != "grid") return;
+    applyCarousel();
   });
 
   cardScrollerEle.addEventListener("scroll", event => {
     updateCarousel();
-  })
+    //TODO make the buttons update
+  });
+
+  const onCarouselInteraction = event => {
+    const touch = event.touches[0];
+    const touchX = touch.clientX - carouselCanvasEle.offsetLeft;
+    const scrollRatio = touchX / carouselCanvasEle.clientWidth;
+    const newScroll = cardLibraryListEle.clientWidth * scrollRatio;
+
+    cardScrollerEle.scrollTo(newScroll, 0);
+  }
+
+  carouselEle.addEventListener("touchstart", onCarouselInteraction);
+
+  carouselEle.addEventListener("touchmove", onCarouselInteraction);
 };
 
 init();

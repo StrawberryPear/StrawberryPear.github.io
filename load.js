@@ -3,16 +3,18 @@ const getCardLibraryPlacementBeforeEle = (placeCard) => {
 
   const getCardSortWeighting = (cardEle) => {
     const cardUID = cardEle.getAttribute('uid');
-    const cardStore = store[cardUID] || 'ZZ';
+    const cardStore = store[cardUID];
+
+    if (!cardStore) return;
 
     // is character / summon adjacent
-    const isSummonOrCharacter = !!cardStore.match(/(character|summon)/i);
-    const isAdvocate = !!cardStore.match(/advocate/i);
-    const isAdversary = !!cardStore.match(/adversary/i);
+    const isSummonOrCharacter = !!cardStore.types.match(/(character|summon)/i);
+    const isAdvocate = !!cardStore.factions.match(/advocate/i);
+    const isAdversary = !!cardStore.factions.match(/adversary/i);
     const cardSet = cardUID.substr(0, cardUID.length - 4);
 
-    const isUpgrade = !!cardStore.match(/upgrade/i);
-    const isRelic = !!cardStore.match(/relic/i);
+    const isUpgrade = !!cardStore.types.match(/upgrade/i);
+    const isRelic = !!cardStore.types.match(/relic/i);
 
     const score = (() => {
       if (isSummonOrCharacter) {
@@ -177,6 +179,9 @@ const loadCard = (card) => {
 
   cardEle.setAttribute('uid', card.uid);
   cardEle.setAttribute('index', card.index);
+
+  // const cardStore = store[]
+  // if (card. == "DELETE"
 
   // where should it be placed.
   const beforeEle = getCardLibraryPlacementBeforeEle(cardEle);

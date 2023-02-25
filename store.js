@@ -113,14 +113,10 @@ const store_ = {
   "Storms of Kural cards - 1": "gnome grenadier range stun dire place scout 23 advocate character",
   "Storms of Kural cards - 2": "lone guard infiltrator range bind disengage dodge rogue 23 advocate character",
   "Storms of Kural cards - 3": "wild elf witch range place reroll nature witch 26 character advocate",
-  "Storms of Kural cards - 4": "",
-  "Storms of Kural cards - 5": "",
   "Storms of Kural cards - 6": "dark prophet range poison damage wizard bone darkness 26 character adversary",
   "Storms of Kural cards - 7": "destroyer pig reroll fighter pig 20 adversary character",
   "Storms of Kural cards - 8": "iguanan marauder range shield armor fighter 23 adversary character",
   "Storms of Kural cards - 9": "Slayer Squid range deep rogue dodge bonus die 23 adversary character",
-  "Storms of Kural cards - 10": "",
-  "Storms of Kural cards - 11": "",
   "Storms of Kural cards - 12": "alchemical munitions damage bonus ranged 4 upgrade",
   "Storms of Kural cards - 13": "bastion shield armor dodge 3 upgrade",
   "Storms of Kural cards - 14": "blade oil single use difficulty 1 upgrade",
@@ -222,34 +218,44 @@ const store_ = {
   "Singular Champions 4 - 7": "Bind Breaker bind 1 upgrade",
   "Singular Champions 4 - 8": "Lotus Bladesong dire dodge armor knight lotus 26 neutral character",
   "Singular Champions 4 - 9": "Knightly Challenge knight armor 2 upgrade",
+
+  "Storms of Kural cards - 4": "reference",
+  "Storms of Kural cards - 5": "reference",
+  "Storms of Kural cards - 10": "DELETE",
+  "Storms of Kural cards - 11": "DELETE",
+  "Storms of Kural cards - 36": "DELETE",
+  "Storms of Kural cards - 37": "DELETE",
 };
 
-const store = Object.keys(store_).map(key => {
-  const base = store_[key].toLowerCase();
-  const cost = `${base.match(/\-*\d+/) || 0}`;
-  
-  const CLASSES = "druid earth cleric holy shield pig darkness bone deep witch wizard illusion scout fighter barbarian nature elemental beast warlord goblin knight demon smith rogue".split(" ");
+const store = Object.keys(store_)
+  .map(key => {
+    const base = store_[key].toLowerCase();
+    const cost = `${base.match(/\-*\d+/) || 0}`;
+    
+    const CLASSES = "druid earth cleric holy shield pig darkness bone deep witch wizard illusion scout fighter barbarian nature elemental beast warlord goblin knight demon smith rogue".split(" ");
 
-  const KEYWORDS = "summon destroy charge tactic critical tactics disengage bound token transform critically ranged jump token engage health place poison companion single stun heal recover spell reroll tactic team dodge armor range deadly dire two uses three uses one use push move beam climb small medium mount rider focus construct upkeep bind bonus die dagger spell damage bonus difficulty ad recovery scenario magical".split(" ");
+    const KEYWORDS = "destroy charge tactic critical tactics disengage bound token transform critically ranged jump token engage health place poison companion single stun heal recover spell reroll tactic team dodge armor range deadly dire two uses three uses one use push move beam climb small medium mount rider focus construct upkeep bind bonus die dagger spell damage bonus difficulty ad recovery scenario magical".split(" ");
 
-  const FACTIONS = "advocate adversary neutral".split(" ");
+    const FACTIONS = "advocate adversary neutral".split(" ");
 
-  const TYPES = "character upgrade relic purchase".split(" ");
+    const TYPES = "character upgrade relic purchase summon".split(" ");
 
-  const classes = CLASSES.filter(c => base.includes(c));
-  const keywords = KEYWORDS.filter(k => base.includes(k));
-  const factions = FACTIONS.filter(f => base.includes(f));
-  const types = TYPES.filter(t => base.includes(t));
+    const classes = CLASSES.filter(c => base.includes(c));
+    const keywords = KEYWORDS.filter(k => base.includes(k));
+    const factions = FACTIONS.filter(f => base.includes(f));
+    const types = TYPES.filter(t => base.includes(t));
 
-  const remainingWords = base.split(" ").filter(w => ![cost, ...classes, ...keywords, ...factions, ...types].includes(w));
-  
-  return {
-      uid: key,
-      base,
-      name: remainingWords.join(" "),
-      classes,
-      keywords,
-      types,
-      factions
-  };
-});
+    const remainingWords = base.split(" ").filter(w => ![cost, ...classes, ...keywords, ...factions, ...types].includes(w));
+    
+    return {
+        uid: key,
+        base,
+        cost,
+        name: remainingWords.join(" "),
+        classes: classes.join(" "),
+        keywords: keywords.join(" "),
+        types: types.join(" "),
+        factions: factions.join(" ")
+    };
+  })
+  .reduce((s, o) => ({...s, [o.uid]: o}), {});

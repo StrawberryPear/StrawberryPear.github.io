@@ -17,7 +17,7 @@ const updateCarousel = () => {
   context.clearRect(0, 0, carouselCanvasEle.width, carouselCanvasEle.height);
 
   context.strokeStyle = `#091e21`;
-  context.lineWidth = 3;
+  context.lineWidth = count > 50 ? 1 : 2;
 
   const linePaddin = 3;
 
@@ -26,8 +26,8 @@ const updateCarousel = () => {
     const x = intervalWidth * 0.5 + intervalWidth * i;
 
     context.beginPath();
-    context.moveTo(x, linePaddin + Math.random() * 3);
-    context.lineTo(x, carouselCanvasEle.height - Math.random() * 6 - linePaddin);
+    context.moveTo(x, linePaddin + Math.sin(x * 12.0133 % 77) * 3);
+    context.lineTo(x, carouselCanvasEle.height - Math.sin(x * 33.033 % 123) * 6 - linePaddin);
     context.stroke();
   }
 
@@ -35,8 +35,9 @@ const updateCarousel = () => {
   const viewX = Math.max(0, Math.min(carouselCanvasEle.width - viewW, carouselCanvasEle.width * index - viewW * 0.5));
 
   // current scroll 
-  context.strokeStyle = `white`;
-  context.fillStyle = "black";
+  context.strokeStyle = `#1c444a`;
+  context.fillStyle = "#102f34";
+  context.lineWidth = 2;
   context.beginPath();
   context.rect(viewX, 0, viewW, carouselCanvasEle.height);
   context.fill();
@@ -47,8 +48,8 @@ const applyCarousel = () => {
   // get the filtered card count
   const containerRect = carouselEle.getBoundingClientRect();
 
-  carouselCanvasEle.width = containerRect.width;
-  carouselCanvasEle.height = containerRect.height;
+  carouselCanvasEle.width = containerRect.width - 32;
+  carouselCanvasEle.height = containerRect.height - 6;
 
   updateCarousel();
 }
