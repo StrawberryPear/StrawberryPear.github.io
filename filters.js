@@ -16,6 +16,7 @@ const filterRelicEle = document.querySelector('cardControl.filterRelic');
 const filterShopEle = document.querySelector('cardControl.filterShop');
 
 var searchText = '';
+var subFilter;
 const filters = {
   character: {
     ele: filterCharactersEle,
@@ -84,6 +85,13 @@ const filters = {
   }
 };
 
+const setSubFilter = (newFilter) => {
+  subFilter = newFilter;
+  document.body.setAttribute("subFilter", newFilter || "");
+
+  applyFilters();
+}
+
 const applyFilters = () => {
   const allFalse = !Object.values(filters).find(o => o.active);
 
@@ -94,7 +102,7 @@ const applyFilters = () => {
     const storeItem = store[uid];
 
     if (!storeItem) {
-      cardEle.classList.toggle('inactive', !allFalse || !!searchText.trim());
+      cardEle.classList.toggle('inactive', subFilter || !allFalse || !!searchText.trim());
 
       continue;
     }
@@ -105,7 +113,17 @@ const applyFilters = () => {
 
     const searchShow = storeItem.base.toLowerCase().includes(searchText.toLowerCase());
 
-    cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow);
+    const subFilterShow = !subFilter || (() => {
+      if (subFilter == 'upgrade') {
+        
+        return storeItem.types.match(/(upgrade|relic)/i);
+      } 
+      if (subFilter == 'character') {
+        return storeItem.types.match(/(character|summon)/i);
+      }
+    })();
+
+    cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow);
   }
   window.requestAnimationFrame(() => {
     cardScrollerEle.scrollTo(0, 0);

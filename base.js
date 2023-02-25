@@ -30,6 +30,7 @@ const showLibraryButton = document.querySelector("cardButton.showLibrary");
 const addUpgradeButton = document.querySelector("cardButton.addUpgrade");
 const showDeckButton = document.querySelector("cardButton.showDeck");
 const addToDeckButton = document.querySelector("cardButton.addToDeck");
+const addCharacterButton = document.querySelector("add");
 const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
 
 const overlayMenuEle = document.querySelector('overlayMenu');
@@ -172,6 +173,7 @@ const init = async () => {
         object.active = isActive;
         
         applyFilters();
+        applyCarousel();
       });
     });
     
@@ -199,8 +201,10 @@ const init = async () => {
   });
   showDeckButton.addEventListener('click', () => {
     if (document.body.getAttribute("showing") !== 'library') return;
-    const currentCard = getCurrentCardEle(true);
 
+    setSubFilter();
+
+    const currentCard = getCurrentCardEle(true);
     libraryFocusCard = currentCard;
 
     // scroll to the last library focused' card
@@ -208,6 +212,28 @@ const init = async () => {
 
     const cardScrollX = deckFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
+  });
+  addUpgradeButton.addEventListener('click', () => {
+    if (document.body.getAttribute("showing") !== 'deck') return;
+
+    const currentCard = getCurrentCardEle();
+    if (!currentCard) return;
+
+    const uid = currentCard.getAttribute("uid");
+    const cardStore = store[uid];
+    if (!cardStore) return;
+
+    // TODO: get what upgrades the character can use
+    setSubFilter('upgrade');
+
+    showLibraryButton.click();
+  });
+  addCharacterButton.addEventListener('click', () => {
+    if (document.body.getAttribute("showing") !== 'deck') return;
+
+    setSubFilter('character');
+
+    showLibraryButton.click();
   });
 
   removeFromDeckButton.addEventListener('click', () => {
@@ -233,7 +259,7 @@ const init = async () => {
 
     const cardEleClone = currentCardEle.cloneNode(true);
 
-    cardDeckListEle.append(cardEleClone);
+    cardDeckListEle.insertBefore(cardEleClone, addCharacterButton);
     deck.push(currentCardEle.getAttribute('uid'));
     updateDeck();
 

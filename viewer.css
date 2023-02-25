@@ -645,3 +645,11 @@ body:not([subfilter="upgrade"]) cardcontrol[type="upgrade"],
 body[subfilter="upgrade"] cardcontrol:not([type="upgrade"]) {
     display: none;
 }
+
+body:not([subFilter="upgrade"]) cardButton.attachUpgrade {
+    display: none;
+}
+
+body[subFilter="upgrade"] cardbutton.addToDeck {
+  display: none;
+}
