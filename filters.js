@@ -1,41 +1,86 @@
+const filterCharactersEle = document.querySelector('cardControl.filterCharacter');
 const filterAdvocateEle = document.querySelector('cardControl.filterAdvocate');
 const filterAdversaryEle = document.querySelector('cardControl.filterAdversary');
 const filterNeutralEle = document.querySelector('cardControl.filterNeutral');
+
 const filterUpgradeEle = document.querySelector('cardControl.filterUpgrade');
+const filterTacticEle = document.querySelector('cardControl.filterTactic');
+const filterPotionEle = document.querySelector('cardControl.filterPotion');
+const filterItemEle = document.querySelector('cardControl.filterItem');
+const filterWeaponEle = document.querySelector('cardControl.filterWeapon');
+const filterSpellEle = document.querySelector('cardControl.filterSpell');
+const filterRelicUpgradeEle = document.querySelector('cardControl.filterRelicUpgrade');
+
 const filterRelicEle = document.querySelector('cardControl.filterRelic');
+
 const filterShopEle = document.querySelector('cardControl.filterShop');
 
 var searchText = '';
 const filters = {
+  character: {
+    ele: filterCharactersEle,
+    filter: /character/i,
+    active: false
+  },
   advocate: {
-    name: 'Advocate',
+    ele: filterAdvocateEle,
     filter: /advocate/i,
-    icon: false
+    active: false
   },
   adversary: {
-    name: 'Adversary',
+    ele: filterAdversaryEle,
     filter: /adversary/i,
-    icon: false
+    active: false
   },
   neutral: {
-    name: 'Neutral',
+    ele: filterNeutralEle,
     filter: /neutral/i,
-    icon: false
+    active: false
   },
   upgrade: {
-    name: 'Upgrade',
+    ele: filterUpgradeEle,
     filter: /upgrade/i,
-    icon: false
+    active: false
+  },
+  tactic: {
+    ele: filterTacticEle,
+    filter: /tactic/i,
+    active: false
+  },
+  potion: {
+    ele: filterPotionEle,
+    filter: /potion/i,
+    active: false
+  },
+  item: {
+    ele: filterItemEle,
+    filter: /item/i,
+    active: false
+  },
+  weapon: {
+    ele: filterWeaponEle,
+    filter: /weapon/i,
+    active: false
+  },
+  spell: {
+    ele: filterSpellEle,
+    filter: /spell/i,
+    active: false
+  },
+  relicUpgrade: {
+    ele: filterRelicUpgradeEle,
+    filter: /relic/i,
+    active: false
   },
   relic: {
-    name: 'Relic',
+    ele: filterRelicEle,
     filter: /relic/i,
-    icon: false
+    active: false
   },
   shop: {
-    name: 'Purchase',
+    ele: filterShopEle,
     filter: /purchase/i,
-    icon: false
+    active: false
   }
 };
 
@@ -55,7 +100,7 @@ const applyFilters = () => {
     }
 
     const filterShow = Object.values(filters).find(o => {
-      return o.active && storeItem.match(o.filter);
+      return o.active && storeItem.base.match(o.filter);
     });
 
     const searchShow = storeItem.base.toLowerCase().includes(searchText.toLowerCase());

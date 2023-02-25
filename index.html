@@ -12,7 +12,7 @@
     <script src="./umd.js"></script>
   </head>
 
-  <body class="loading" showing="deck">
+  <body class="loading" showing="deck" subfilter="upgrade">
     <nav>
       <call><span id="title">Deck Builder</span> <span id="points"></span></call>
       <ham></ham>
@@ -24,8 +24,20 @@
         <searchIcon type="view"></searchIcon>
         <searchIcon type="clear"></searchIcon>
       </searchContainer>
+      <cardControl class="library filterCharacter inactive"></cardControl>
+      <cardControl type="character" class="library filterAdvocate inactive"></cardControl>
+      <cardControl type="character" class="library filterAdversary inactive"></cardControl>
+      <cardControl type="character" class="library filterNeutral inactive"></cardControl>
+      <cardControl type="" class="library filterUpgrade inactive"></cardControl>
+      <cardControl type="upgrade" class="library filterTactic inactive"></cardControl>
+      <cardControl type="upgrade" class="library filterPotion inactive"></cardControl>
+      <cardControl type="upgrade" class="library filterWeapon inactive"></cardControl>
+      <cardControl type="upgrade" class="library filterItem inactive"></cardControl>
+      <cardControl type="upgrade" class="library filterSpell inactive"></cardControl>
+      <cardControl type="upgrade" class="library filterRelicUpgrade inactive"></cardControl>
+      <cardControl type="" class="library filterRelic inactive"></cardControl>
+      <cardControl type="" class="library filterShop inactive"></cardControl>
       <topButton class="grid"></topButton>
-      <topButton class="filter">Filter</topButton>
     </cardTopControls>
 
     <cardScrollerContainer>
@@ -83,7 +95,8 @@
             <label>Purchase Cardset, $15.00</label>
           </purchase>
           <import uid="Add Own">
-            <label class="fileUpload">Add Cards from PDF<input type='file' /></label>
+            <label>Add Cards from PDF</label>
+            <label class="fileUpload"><input type='file' /></label>
           </import>
         </cardList>
         <cardList class="deck"><add><label>Add Character</label></add></cardList>
@@ -97,9 +110,11 @@
     <cardButtons>
       <cardButton class="deck removeFromDeck">Remove</cardButton>
       <cardButton class="deck showLibrary">Show Library</cardButton>
+      <cardButton class="deck addUpgrade">Add Upgrade</cardButton>
 
       <cardButton class="library showDeck">Return</cardButton>
       <cardButton class="library addToDeck">Add to Deck</cardButton>
+      <cardButton class="library attachUpgrade">Attach Upgrade</cardButton>
     </cardButtons>
 
     <toast></toast>

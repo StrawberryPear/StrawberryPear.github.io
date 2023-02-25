@@ -14,6 +14,26 @@ PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 var database;
 var deck = [];
 
+const cardScrollerEle = document.querySelector('cardScroller');
+const cardLibraryListEle = document.querySelector('cardList.library');
+const cardDeckListEle = document.querySelector('cardList.deck');
+const cardTopControlsEle = document.querySelector('cardTopControls');
+
+const cardScroller = document.querySelector('cardScroller');
+const searchInputEle = document.querySelector('searchContainer input');
+const searchInputClearEle = document.querySelector('searchContainer searchicon[type="clear"]');
+const removeLibraryCardEle = document.querySelector('menuControl.removeLibraryCard');
+const gridButtonEle = document.querySelector('topButton.grid');
+
+const removeFromDeckButton = document.querySelector("cardButton.removeFromDeck");
+const showLibraryButton = document.querySelector("cardButton.showLibrary");
+const addUpgradeButton = document.querySelector("cardButton.addUpgrade");
+const showDeckButton = document.querySelector("cardButton.showDeck");
+const addToDeckButton = document.querySelector("cardButton.addToDeck");
+const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
+
+const overlayMenuEle = document.querySelector('overlayMenu');
+
 const updateDeck = () => {
   // work out total points in deck :D
   const cards = deck.map(id => store[id]);
@@ -23,11 +43,6 @@ const updateDeck = () => {
 
   deckCostEle.innerHTML = cost ? `&nbsp;(${cost})` : '';
 };
-
-const cardScrollerEle = document.querySelector('cardScroller');
-const cardLibraryListEle = document.querySelector('cardList.library');
-const cardDeckListEle = document.querySelector('cardList.deck');
-const cardTopControlsEle = document.querySelector('cardTopControls');
 
 const getCurrentCardEle = (canBePurchase) => {
   const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
@@ -146,15 +161,27 @@ const init = async () => {
     cardDeckListEle.insertBefore(cardCloneEle, cardDeckListEle.lastChild);
   }
 
+  Object.keys(filters)
+    .forEach(key => {
+      const object = filters[key];
+      object.ele.addEventListener('click', () => {
+        const startsInactive = object.ele.classList.contains('inactive');
+        object.ele.classList.toggle('inactive');
+    
+        const isActive = !!startsInactive;
+        object.active = isActive;
+        
+        applyFilters();
+      });
+    });
+    
   applyFilters();
   applyCarousel();
-
-  const cardScroller = document.querySelector('cardScroller');
 
   var libraryFocusCard;
   var deckFocusCard;
 
-  document.querySelector('.showLibrary').addEventListener('click', () => {
+  showLibraryButton.addEventListener('click', () => {
     document.body.className = '';
 
     if (document.body.getAttribute("showing") !== 'deck') return;
@@ -170,7 +197,7 @@ const init = async () => {
     const cardScrollX = libraryFocusCard?.offsetLeft || 0;
     cardScroller.scrollTo(cardScrollX, 0);
   });
-  document.querySelector('.showDeck').addEventListener('click', () => {
+  showDeckButton.addEventListener('click', () => {
     if (document.body.getAttribute("showing") !== 'library') return;
     const currentCard = getCurrentCardEle(true);
 
@@ -183,21 +210,24 @@ const init = async () => {
     cardScroller.scrollTo(cardScrollX, 0);
   });
 
-  document.querySelector('cardButton.removeFromDeck').addEventListener('click', () => {
+  removeFromDeckButton.addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
 
-    if (currentCardEle) {
-      const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
+    if (!currentCardEle) return;
+    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
 
-      deck.splice(currentCardIndex, 1);
-      localStorage.setItem('deck', deck);
-      updateDeck();
+    const confirmValue = confirm('Are you sure you want to remove this card from this deck?');
+    if (!confirmValue) return;
 
-      showToast(`Card removed from deck`);
-      currentCardEle.remove();
-    }
+
+    deck.splice(currentCardIndex, 1);
+    localStorage.setItem('deck', deck);
+    updateDeck();
+
+    showToast(`Card removed from deck`);
+    currentCardEle.remove();
   });
-  document.querySelector('cardButton.addToDeck').addEventListener('click', () => {
+  addToDeckButton.addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
@@ -210,7 +240,7 @@ const init = async () => {
     showToast(`Card added to deck`);
     localStorage.setItem('deck', deck);
   });
-  document.querySelector("cardScroller").addEventListener('click', (e) => {
+  cardScrollerEle.addEventListener('click', (e) => {
     // get the card that was clicked
     const cardEle = e.target;
 
@@ -245,7 +275,6 @@ const init = async () => {
     }
   });
 
-  const searchInputEle = document.querySelector('searchContainer input');
   searchInputEle.addEventListener('keyup', async () => {
     searchText = searchInputEle.value;
 
@@ -254,7 +283,7 @@ const init = async () => {
 
     cardTopControlsEle.classList.toggle('searched', !!searchText);
   });
-  document.querySelector('searchContainer searchicon[type="clear"]').addEventListener("click", () => {
+  searchInputClearEle.addEventListener("click", () => {
     searchText = "";
     searchInputEle.value = "";
 
@@ -263,7 +292,7 @@ const init = async () => {
     cardTopControlsEle.classList.toggle('searched', !!searchText);
   })
 
-  document.querySelector('menuControl.removeLibraryCard').addEventListener('click', async (e) => {
+  removeLibraryCardEle.addEventListener('click', async (e) => {
     overlayMenuEle.className = 'hidden';
     e.preventDefault();
 
@@ -287,7 +316,6 @@ const init = async () => {
     }, 200);
   });
 
-  const overlayMenuEle = document.querySelector('overlayMenu');
   overlayMenuEle.addEventListener('click', e => {
     if (e.target !== overlayMenuEle) return;
     overlayMenuEle.className = 'hidden';
@@ -297,7 +325,7 @@ const init = async () => {
     overlayMenuEle.className = '';
   });
 
-  document.querySelector('topButton.grid').addEventListener('click', () => {
+  gridButtonEle.addEventListener('click', () => {
     const currentDisplayType = document.body.getAttribute("displayType");
 
     document.body.setAttribute("displayType", currentDisplayType == 'grid' ? '' : 'grid');
@@ -306,9 +334,15 @@ const init = async () => {
     applyCarousel();
   });
 
+  var scrollTimeout;
   cardScrollerEle.addEventListener("scroll", event => {
     updateCarousel();
     //TODO make the buttons update
+
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      console.log("scrollEnd");
+    }, 200);
   });
 
   const onCarouselInteraction = event => {

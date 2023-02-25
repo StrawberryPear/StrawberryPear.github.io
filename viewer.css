@@ -28,6 +28,7 @@ body {
   box-sizing: border-box;
   position: fixed;
   height: calc(var(--screen-height));
+  max-height: calc(var(--screen-height));
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
@@ -39,7 +40,6 @@ cardScroller {
   width: 100%;
   scroll-snap-type: x mandatory;
   overflow-x: scroll;
-  flex-grow: 1;
   -ms-overflow-style: none;
   scrollbar-width: none;
   position: relative;
@@ -59,10 +59,10 @@ cardScroller::-webkit-scrollbar {
 }
 cardList {
   display: inline-flex;
-  padding: 0 50%;
   height: 100%;
   align-items: center;
   box-sizing: border-box;
+  padding: 0 50%;
 }
 card, purchase, import, add {
   position: relative;
@@ -72,7 +72,7 @@ card, purchase, import, add {
   background-size: 100%;
   background-repeat: no-repeat;
   background-position: center top;
-  background-color: black;
+  background-color: #000;
   border-radius: 3.8%;
   margin: 0 min(2vw, 20px);
   scroll-snap-align: center;
@@ -80,6 +80,7 @@ card, purchase, import, add {
 purchase, import, add {
   height:var(--card-width);
   border-radius: 0;
+  background-color: #113e40;
 }
 purchase label, import label, add label {
   position: absolute;
@@ -91,11 +92,13 @@ purchase label, import label, add label {
   font-family: 'tradeWinds';
   text-align: center;
   font-size: 20px;
+  pointer-events: none;
 }
 purchase.bought {
   display: none;
 }
 import {
+  background-color: #0c3133;
   background-image: url('./assets/cardpacks/import.jpg');
 } 
 purchase[uid="Lostwood Enclave"] {
@@ -173,6 +176,7 @@ nav {
   flex-wrap: nowrap;
   justify-content: space-between;
   align-items: center;
+  min-height: var(--nav-height);
 }
 call {
   display: inline-block;
@@ -203,13 +207,14 @@ body:not(.editing) cardTabControls cardControl.editing {
 cardTabControls {
   display: flex;
   position: fixed;
-  top: calc(50% - var(--card-height) * 0.5);
-  left: calc(var(--screen-width) * 0.5 + var(--card-width) * 0.5);
+  top: calc(var(--nav-height) + 30.5px);
+  left: var(--screen-width);
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: flex-end;
   height: var(--card-height);
-  transform: translateX(-33%);
+  transform: translateX(-100%);
+  z-index: 2;
 }
 cardTopControls{
   display: flex;
@@ -221,17 +226,21 @@ cardTopControls{
   align-items: stretch;
   background: rgb(8 23 25);
   font-size: 16px;
+  overflow: hidden;
+  min-height: 30.5px;
 }
 cardControl {
   position: relative;
   width: min(calc(0.06 * var(--screen-height)), 80px);
-  height: min(calc(0.06 * var(--screen-height)), 80px);
-  margin-bottom: 12px;
+  height: 100%;
   background-size: 100%;
   background-repeat: no-repeat;
   background-position: center;
   background-image: url('./assets/controlBack.png');
   pointer-events: all;
+  transform: scale(1.15);
+  color: black;
+  filter: invert(1);
 }
 cardControl::before {
   content:'';
@@ -244,40 +253,10 @@ cardControl::before {
   background-size: 80%;
   background-repeat: no-repeat;
   background-position: center;
-}
-cardControl.edit::before {
-  background-image: url('./assets/edit.png');
-  background-size: 60%;
-}
-cardControl.end::before {
-  background-image: url('./assets/end.png');
-}
-cardControl.erase {
-  margin-bottom: 32px;
-}
-cardControl.erase::before {
-  background-image: url('./assets/erase.png');
-  background-size: 60%;
-}
-cardControl.shiftUp::before {
-  background-image: url('./assets/left.png');
-}
-cardControl.shiftDown::before {
-  background-image: url('./assets/right.png');
-}
-cardControl.destroy {
-  margin-bottom: 48px;
-}
-cardControl.destroy::before {
-  background-image: url('./assets/destroy.png');
+  filter: contrast(0.65) invert(1);
 }
 
-cardControl.filterAdvocate::before,
-cardControl.filterAdversary::before,
-cardControl.filterNeutral::before,
-cardControl.filterUpgrade::before,
-cardControl.filterRelic::before,
-cardControl.filterShop::before {
+cardControl::before {
   content: 'U';
   display: flex;
   justify-content: center;
@@ -286,18 +265,13 @@ cardControl.filterShop::before {
   font-size: 20px;
   padding-top: 4px;
 }
-cardControl.filterAdvocate,
-cardControl.filterAdversary,
-cardControl.filterNeutral,
-cardControl.filterUpgrade,
-cardControl.filterRelic,
-cardControl.filterShop {
-    filter: contrast(0.75) invert(1);
-}
 cardControl.inactive {
-  filter: contrast(0.55);
+  filter: contrast(0.7);
 }
 
+cardControl.filterCharacter::before {
+  content: 'C';
+}
 cardControl.filterAdvocate::before {
   content: 'G';
 }
@@ -307,7 +281,22 @@ cardControl.filterAdversary::before {
 cardControl.filterNeutral::before {
   content: 'N';
 }
-cardControl.filterRelic::before {
+cardControl.filterTactic::before {
+  content: 'T';
+}
+cardControl.filterPotion::before {
+  content: 'P';
+}
+cardControl.filterWeapon::before {
+  content: 'W';
+}
+cardControl.filterItem::before {
+  content: 'I';
+}
+cardControl.filterSpell::before {
+  content: 'S';
+}
+cardControl.filterRelic::before, cardControl.filterRelicUpgrade::before {
   content: 'R';
 }
 cardControl.filterShop::before {
@@ -534,11 +523,12 @@ topButton {
 }
 
 topbutton.grid {
-    width: 38px;
+    width: 46px;
     background-image: url('./assets/grid.png');
     background-position: center;
     background-repeat: no-repeat;
-    background-size: 58%;
+    background-size: 46%;
+    min-width: 56px;
 }
 
 searchicon[type="clear"] {
@@ -566,6 +556,16 @@ body[displayType="grid"] cardlist.library {
     align-content: center;
     grid-template-rows: repeat(auto-fill, calc(var(--card-height) * 0.45 + var(--screen-height) * 0.01));
     grid-auto-flow: column;
+    box-sizing: border-box;
+    position: relative;
+    padding-right: 0px;
+}
+body[displayType="grid"] cardlist.library::after {
+  content:"";
+  width: calc(var(--screen-width) * 0.5);
+  margin-right: 0px;
+  height: 100%;
+  grid-row: span round(down, calc(var(--screen-height) - 56.69px - 30.5px - var(--nav-height)));
 }
 
 body[displayType="grid"] cardlist.library card {
@@ -627,4 +627,21 @@ body[showing="library"]:not([displayType="grid"]) cardcarousel {
 
 body[displayType="grid"] topButton.grid {
     background-image: url('./assets/single.png');
+}
+
+cardbutton.addUpgrade {
+    grid-column: 3;
+}
+
+cardbutton.attachUpgrade {
+    grid-column: 3;
+}
+
+label.fileUpload {pointer-events: all;top: 0px;bottom: 0px;background: none;}
+
+body:not([subfilter="character"]) cardcontrol[type="character"], 
+body[subfilter="character"] cardcontrol:not([type="character"]),
+body:not([subfilter="upgrade"]) cardcontrol[type="upgrade"], 
+body[subfilter="upgrade"] cardcontrol:not([type="upgrade"]) {
+    display: none;
 }
