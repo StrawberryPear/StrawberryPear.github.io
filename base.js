@@ -79,7 +79,45 @@ const showToast = (() => {
       toastEle.style.setProperty('opacity', 0);
     }, 4000);
   }
-})()
+})();
+
+const addCharacterToDeck = (data, updateDeckStore = true) => {
+  const uid = data.uid;
+  if (!uid) return;
+
+  const cardStore = store[uid];
+  if (!cardStore) return;
+
+  const libraryCardEles = [...cardLibraryListEle.children];
+  const cardEle = libraryCardEles.find(ele => ele.getAttribute('uid') == uid);
+  if (!cardEle) return;
+
+  const cardCloneEle = cardEle.cloneNode(true);
+  cardDeckListEle.insertBefore(cardCloneEle, addCharacterButton);
+
+  // create mark boxes...
+  (cardStore.markBoxes || []).forEach(([boxX, boxY, marked]) => {
+    const boxEle = document.createElement("markBox");
+
+    cardCloneEle.append(boxEle);
+
+    boxEle.style.setProperty("top", `${boxY * 100}%`);
+    boxEle.style.setProperty("left", `${boxX * 100}%`);
+    boxEle.style.setProperty("transform", `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`);
+
+    boxEle.addEventListener("click", () => {
+      boxEle.classList.toggle("marked");
+    });
+  });
+
+  if (updateDeckStore) {
+    deck.push({
+      uid
+    });
+  }
+
+  return cardCloneEle
+};
 
 // initialize the database.
 const init = async () => {
@@ -94,9 +132,10 @@ const init = async () => {
   database = await idb.openDB('relicbladeCards', 2, {
     upgrade: (db, oldVersion) => {
       if (oldVersion == 1) {
-        localStorage.setItem("deck", []);
+        localStorage.setItem("deck", JSON.stringify([]));
         db.deleteObjectStore('cards');
       }
+
       const cardObjectStore = db.createObjectStore('cards', { keyPath: 'index', autoIncrement: true }); 
 
       cardObjectStore.createIndex('uid', 'uid', { unique: true });
@@ -147,19 +186,17 @@ const init = async () => {
     })
   });
 
+  var jsonDeck = [];
+  try {
+    jsonDeck = JSON.parse(localStorage.getItem('deck') || '[]');
+  } catch (e) { }
+
   // inital deck production
-  deck = (localStorage.getItem('deck') || '')
-    .split(',')
-    .filter(v => v && cards.find(card => card.uid == v));
+  deck = jsonDeck.filter(v => v && cards.find(card => card.uid == v.uid));
   updateDeck();
-  const initialLibraryCardEles = [...cardLibraryListEle.children];
 
-  for (const cardId of deck) {
-    const cardEle = initialLibraryCardEles.find(ele => ele.getAttribute('uid') == cardId);
-    if (!cardEle) continue;
-
-    const cardCloneEle = cardEle.cloneNode(true);
-    cardDeckListEle.insertBefore(cardCloneEle, cardDeckListEle.lastChild);
+  for (const cardData of deck) {
+    addCharacterToDeck(cardData, false);
   }
 
   Object.keys(filters)
@@ -249,27 +286,29 @@ const init = async () => {
 
 
     deck.splice(currentCardIndex, 1);
-    localStorage.setItem('deck', deck);
+    localStorage.setItem('deck', JSON.stringify(deck));
     updateDeck();
 
     showToast(`Card removed from deck`);
     currentCardEle.remove();
   });
   addToDeckButton.addEventListener('click', () => {
+    debugger;
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
-    const cardEleClone = currentCardEle.cloneNode(true);
+    const uid = currentCardEle.getAttribute("uid");
 
-    cardDeckListEle.insertBefore(cardEleClone, addCharacterButton);
-    deck.push(currentCardEle.getAttribute('uid'));
+    const cardEleClone = addCharacterToDeck({uid});
+    if (!cardEleClone) return;
+
     updateDeck();
 
     deckFocusCard = cardEleClone;
     showToast(`Card added to deck`);
     showDeckButton.click();
 
-    localStorage.setItem('deck', deck);
+    localStorage.setItem('deck', JSON.stringify(deck));
   });
   cardScrollerEle.addEventListener('click', (e) => {
     // get the card that was clicked
@@ -296,6 +335,22 @@ const init = async () => {
     
     const currentCardEle = getCurrentCardEle(true);
     if (!currentCardEle) return;
+    
+    const uid = currentCardEle.getAttribute("uid");
+    const cardStore = store[uid];
+    if (!cardStore) return;
+
+    // get the xy of where was clicked
+    // get card bounds
+    // const cardBounds = currentCardEle.getBoundingClientRect();
+
+    // const markBoxX = (e.clientX - cardBounds.left) / cardBounds.width;
+    // const markBoxY = (e.clientY - cardBounds.top) / cardBounds.height;
+
+    // cardStore.markBoxes = cardStore.markBoxes || [];
+    // cardStore.markBoxes.push([markBoxX, markBoxY, 0]);
+
+    // console.log(`box marked: ${markBoxX} - ${markBoxY}`);
 
     switch (currentCardEle.tagName) {
       case "PURCHASE":
@@ -377,6 +432,7 @@ const init = async () => {
   });
 
   const onCarouselInteraction = event => {
+    console.log('touch');
     const touch = event.touches[0];
     const touchX = touch.clientX - carouselCanvasEle.offsetLeft;
     const scrollRatio = touchX / carouselCanvasEle.clientWidth;
@@ -386,8 +442,10 @@ const init = async () => {
   }
 
   carouselEle.addEventListener("touchstart", onCarouselInteraction);
-
   carouselEle.addEventListener("touchmove", onCarouselInteraction);
+
+  carouselEle.addEventListener("mousedown", onCarouselInteraction);
+  carouselEle.addEventListener("mousemove", onCarouselInteraction);
 };
 
 init();

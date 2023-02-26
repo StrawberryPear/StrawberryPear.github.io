@@ -152,7 +152,7 @@ purchase[uid="Singular Champions 3"] {
 purchase[uid="Singular Champions 4"] {
   background-image: url('./assets/cardpacks/Singular-Champions-4.jpg');
 }
-card.inactive, purchase.inactive {
+card.inactive, purchase.inactive, import.inactive {
   display: none;
 }
 body.editing card {
@@ -478,9 +478,13 @@ overlayMenu, loadingOverlay {
 loadingOverlay {
   pointer-events: all;
 }
-overlayMenu.hidden, body:not(.loading) loadingOverlay {
+overlayMenu.hidden, 
+body:not(.loading) loadingOverlay {
   opacity: 0;
   pointer-events: none;
+}
+overlayMenu.hidden * {
+  pointer-events: none !important;
 }
 label input {
   display: none;
@@ -527,7 +531,7 @@ topbutton.grid {
     background-image: url('./assets/grid.png');
     background-position: center;
     background-repeat: no-repeat;
-    background-size: 46%;
+    background-size: auto 74%;
     min-width: 56px;
 }
 
@@ -610,6 +614,7 @@ cardCarousel canvas {
   margin: 3px 16px;
   width: calc(100% - 32px);
   height: calc(100% - 6px);
+  pointer-events: none;
 }
 
 cardScrollerContainer {
@@ -652,4 +657,29 @@ body:not([subFilter="upgrade"]) cardButton.attachUpgrade {
 
 body[subFilter="upgrade"] cardbutton.addToDeck {
   display: none;
+}
+
+markBox {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    transform: translate(-50%, -50%);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+markBox:first-child:last-child {
+    width: 24px;
+    height:24px;
+    background-image: url('./assets/unmarked.png');
+  
+}
+markBox.marked:first-child:last-child {
+    width: 24px;
+    height:24px;
+    background-image: url('./assets/marked.png'), url('./assets/unmarked.png');
+  
+}
+markBox.marked {
+    background-image: url('./assets/marked.png');
 }
