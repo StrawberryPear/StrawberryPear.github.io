@@ -14,6 +14,11 @@ PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 var database;
 var deck = [];
 
+var libraryFocusCard;
+var deckFocusCard;
+
+var attachCharacter;
+
 const cardScrollerEle = document.querySelector('cardScroller');
 const cardLibraryListEle = document.querySelector('cardList.library');
 const cardDeckListEle = document.querySelector('cardList.deck');
@@ -43,6 +48,8 @@ const updateDeck = () => {
   const deckCostEle = document.getElementById('points');
 
   deckCostEle.innerHTML = cost ? `&nbsp;(${cost})` : '';
+
+  localStorage.setItem("deck", JSON.stringify(deck));
 };
 
 const getCurrentCardEle = (canBePurchase) => {
@@ -113,6 +120,44 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
   if (updateDeckStore) {
     deck.push({
       uid
+    });
+  }
+
+  return cardCloneEle
+};
+
+const addUpgradeToCharacter = (upgradeUID, characterCardEle, deckCharacter, updateDeckStore = true) => {
+  if (!upgradeUID) return;
+
+  const upgradeCardStore = store[upgradeUID];
+  if (!upgradeCardStore) return;
+
+  const libraryCardEles = [...cardLibraryListEle.children];
+  const cardEle = libraryCardEles.find(ele => ele.getAttribute('uid') == upgradeUID);
+  if (!cardEle) return;
+
+  const cardCloneEle = cardEle.cloneNode(true);
+  characterCardEle.append(cardCloneEle);
+
+  // create mark boxes...
+  (upgradeCardStore.markBoxes || []).forEach(([boxX, boxY, marked]) => {
+    const boxEle = document.createElement("markBox");
+
+    cardCloneEle.append(boxEle);
+
+    boxEle.style.setProperty("top", `${boxY * 100}%`);
+    boxEle.style.setProperty("left", `${boxX * 100}%`);
+    boxEle.style.setProperty("transform", `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`);
+
+    boxEle.addEventListener("click", () => {
+      boxEle.classList.toggle("marked");
+    });
+  });
+
+  if (updateDeckStore) {
+    deckCharacter.upgrades = deckCharacter.upgrades || [];
+    deckCharacter.upgrades.push({
+      uid: upgradeUID
     });
   }
 
@@ -219,9 +264,6 @@ const init = async () => {
   applyFilters();
   applyCarousel();
 
-  var libraryFocusCard;
-  var deckFocusCard;
-
   showLibraryButton.addEventListener('click', () => {
     document.body.className = '';
 
@@ -255,15 +297,20 @@ const init = async () => {
   addUpgradeButton.addEventListener('click', () => {
     if (document.body.getAttribute("showing") !== 'deck') return;
 
-    const currentCard = getCurrentCardEle();
-    if (!currentCard) return;
+    const currentCardEle = getCurrentCardEle();
+    if (!currentCardEle) return;
 
-    const uid = currentCard.getAttribute("uid");
+    const uid = currentCardEle.getAttribute("uid");
     const cardStore = store[uid];
     if (!cardStore) return;
 
+    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
+
     // TODO: get what upgrades the character can use
     setSubFilter('upgrade', { classes: cardStore.classes, upgradeType: cardStore.upgradeTypes});
+
+    deckFocusCard = currentCardEle;
+    attachCharacter = deck[currentCardIndex];
 
     showLibraryButton.click();
   });
@@ -286,14 +333,12 @@ const init = async () => {
 
 
     deck.splice(currentCardIndex, 1);
-    localStorage.setItem('deck', JSON.stringify(deck));
     updateDeck();
 
     showToast(`Card removed from deck`);
     currentCardEle.remove();
   });
   addToDeckButton.addEventListener('click', () => {
-    debugger;
     const currentCardEle = getCurrentCardEle();
     if (!currentCardEle) return;
 
@@ -307,8 +352,24 @@ const init = async () => {
     deckFocusCard = cardEleClone;
     showToast(`Card added to deck`);
     showDeckButton.click();
+  });
+  attachUpgradeButton.addEventListener('click', (e) => {
+    debugger;
+    if (!attachCharacter) return;
 
-    localStorage.setItem('deck', JSON.stringify(deck));
+    const currentCardEle = getCurrentCardEle();
+    if (!currentCardEle) return;
+
+    const uid = currentCardEle.getAttribute("uid");
+    if (!uid) return;
+
+    const cardEleClone = addUpgradeToCharacter(uid, deckFocusCard, attachCharacter, true);
+
+    if (!cardEleClone) return;
+    updateDeck();
+
+    showToast(`Upgrade Attached`);
+    showDeckButton.click();
   });
   cardScrollerEle.addEventListener('click', (e) => {
     // get the card that was clicked
