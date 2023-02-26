@@ -174,6 +174,8 @@ const init = async () => {
         
         applyFilters();
         applyCarousel();
+
+        cardScroller.scrollTo(0, 0);
       });
     });
     
@@ -224,7 +226,7 @@ const init = async () => {
     if (!cardStore) return;
 
     // TODO: get what upgrades the character can use
-    setSubFilter('upgrade');
+    setSubFilter('upgrade', { classes: cardStore.classes, upgradeType: cardStore.upgradeTypes});
 
     showLibraryButton.click();
   });
@@ -263,7 +265,10 @@ const init = async () => {
     deck.push(currentCardEle.getAttribute('uid'));
     updateDeck();
 
+    deckFocusCard = cardEleClone;
     showToast(`Card added to deck`);
+    showDeckButton.click();
+
     localStorage.setItem('deck', deck);
   });
   cardScrollerEle.addEventListener('click', (e) => {

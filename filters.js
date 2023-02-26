@@ -86,8 +86,16 @@ const filters = {
 };
 
 const setSubFilter = (newFilter) => {
+  if (subFilter == newFilter) return;
+
   subFilter = newFilter;
   document.body.setAttribute("subFilter", newFilter || "");
+
+  // clear all the filters
+  Object.values(filters).forEach(filter => {
+    filter.active = false;
+    filter.ele.classList.add("inactive");
+  });
 
   applyFilters();
 }
@@ -125,9 +133,6 @@ const applyFilters = () => {
 
     cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow);
   }
-  window.requestAnimationFrame(() => {
-    cardScrollerEle.scrollTo(0, 0);
-  });
 
   // check purchases
   for (const purchaseEle of [...libraryCardEles.filter(ele => ele.tagName == "PURCHASE")]) {
