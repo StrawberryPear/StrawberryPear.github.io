@@ -24,7 +24,6 @@ const cardLibraryListEle = document.querySelector('cardList.library');
 const cardDeckListEle = document.querySelector('cardList.deck');
 const cardTopControlsEle = document.querySelector('cardTopControls');
 
-const cardScroller = document.querySelector('cardScroller');
 const searchInputEle = document.querySelector('searchContainer input');
 const searchInputClearEle = document.querySelector('searchContainer searchicon[type="clear"]');
 const removeLibraryCardEle = document.querySelector('menuControl.removeLibraryCard');
@@ -40,6 +39,10 @@ const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
 
 const overlayMenuEle = document.querySelector('overlayMenu');
 
+const awaitFrame = () => new Promise(resolve => {
+  window.requestAnimationFrame(resolve);
+});
+
 const updateDeck = () => {
   // work out total points in deck :D
   const cards = deck.map(id => store[id]);
@@ -52,8 +55,30 @@ const updateDeck = () => {
   localStorage.setItem("deck", JSON.stringify(deck));
 };
 
+const setDeckFocusCard = (newDeckFocusCard) => {
+  // check if they're different
+  if (deckFocusCard == newDeckFocusCard) return; 
+
+  deckFocusCard = newDeckFocusCard;
+
+  console.log("changed deckfocus card", deckFocusCard?.getAttribute('uid'));
+};
+
+const getCurrentDeckCardEle = () => {
+  // make sure it's the top level
+  var currentCardEle = getCurrentCardEle();
+  if (!currentCardEle) return;
+  
+  // get the top level
+  while (currentCardEle.parentElement.tagName == "CARD") {
+    currentCardEle = currentCardEle.parentElement;
+  }
+
+  return currentCardEle;
+};
+
 const getCurrentCardEle = (canBePurchase) => {
-  const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.25);
+  const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5);
   const cardEle = pointEles.find(ele => ["CARD", "PURCHASE", "IMPORT"].includes(ele.tagName));
 
   if (cardEle?.tagName == 'CARD' || (canBePurchase && ["PURCHASE", "IMPORT"].includes(cardEle?.tagName))) {
@@ -121,6 +146,12 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
     deck.push({
       uid
     });
+  }
+
+  if (data.upgrades) {
+    data.upgrades.forEach((upgrade) => {
+      addUpgradeToCharacter(upgrade.uid, cardCloneEle, data, false);
+    })
   }
 
   return cardCloneEle
@@ -257,30 +288,34 @@ const init = async () => {
         applyFilters();
         applyCarousel();
 
-        cardScroller.scrollTo(0, 0);
+        cardScrollerEle.scrollTo(0, 0);
       });
     });
     
   applyFilters();
   applyCarousel();
 
-  showLibraryButton.addEventListener('click', () => {
+  showLibraryButton.addEventListener('click', async () => {
     document.body.className = '';
 
     if (document.body.getAttribute("showing") !== 'deck') return;
-    const currentCard = getCurrentCardEle(true);
-
-    deckFocusCard = currentCard;
+    setDeckFocusCard(getCurrentDeckCardEle());
+    // get the top level element
 
     // scroll to the last library focused' card
     document.body.setAttribute("showing", "library");
 
     applyCarousel();
 
-    const cardScrollX = libraryFocusCard?.offsetLeft || 0;
-    cardScroller.scrollTo(cardScrollX, 0);
+    const time = Date.now();
+    while (Date.now() - time < 600) {
+      await awaitFrame();
+
+      const cardScrollX = libraryFocusCard?.offsetLeft || 0;
+      cardScrollerEle.scrollTo(cardScrollX, 0);
+    }
   });
-  showDeckButton.addEventListener('click', () => {
+  showDeckButton.addEventListener('click', async () => {
     if (document.body.getAttribute("showing") !== 'library') return;
 
     setSubFilter();
@@ -291,25 +326,30 @@ const init = async () => {
     // scroll to the last library focused' card
     document.body.setAttribute("showing", "deck");
 
-    const cardScrollX = deckFocusCard?.offsetLeft || 0;
-    cardScroller.scrollTo(cardScrollX, 0);
+    const time = Date.now();
+    while (Date.now() - time < 600) {
+      await awaitFrame();
+
+      const cardScrollX = deckFocusCard?.offsetLeft || 0;
+      cardScrollerEle.scrollTo(cardScrollX, 0);
+    }
   });
   addUpgradeButton.addEventListener('click', () => {
     if (document.body.getAttribute("showing") !== 'deck') return;
 
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
+    const deckCurrentCardEle = getCurrentDeckCardEle();
+    if (!deckCurrentCardEle) return;
 
-    const uid = currentCardEle.getAttribute("uid");
+    const uid = deckCurrentCardEle.getAttribute("uid");
     const cardStore = store[uid];
     if (!cardStore) return;
 
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
+    const currentCardIndex = [...cardDeckListEle.children].indexOf(deckCurrentCardEle);
 
     // TODO: get what upgrades the character can use
     setSubFilter('upgrade', { classes: cardStore.classes, upgradeType: cardStore.upgradeTypes});
 
-    deckFocusCard = currentCardEle;
+    setDeckFocusCard(deckCurrentCardEle);
     attachCharacter = deck[currentCardIndex];
 
     showLibraryButton.click();
@@ -348,8 +388,7 @@ const init = async () => {
     if (!cardEleClone) return;
 
     updateDeck();
-
-    deckFocusCard = cardEleClone;
+    setDeckFocusCard(cardEleClone);
     showToast(`Card added to deck`);
     showDeckButton.click();
   });
@@ -387,7 +426,7 @@ const init = async () => {
       applyCarousel();
 
       const scrollLeft = cardEle.offsetLeft;
-      cardScroller.scrollTo(scrollLeft, 0);
+      cardScrollerEle.scrollTo(scrollLeft, 0);
 
       return;
     }
@@ -486,14 +525,78 @@ const init = async () => {
     updateCarousel();
     //TODO make the buttons update
 
+    if (document.body.getAttribute("showing") !== "deck") return;
+    setDeckFocusCard(getCurrentDeckCardEle());
+
     if (scrollTimeout) clearTimeout(scrollTimeout);
     scrollTimeout = setTimeout(() => {
-      console.log("scrollEnd");
+      if (document.body.getAttribute("showing") !== "deck") return;
+      setDeckFocusCard(getCurrentDeckCardEle());
     }, 200);
   });
 
+  const applyDeckTopScroll = (cardEle, scrollY) => {
+    cardEle.style.setProperty("transform", `translateY(${scrollY}px)`);
+  }
+
+  cardScrollerEle.addEventListener("touchstart", event => {
+    // check if we're in the deck
+    if (document.body.getAttribute("showing") != "deck") return;
+
+    setDeckFocusCard(getCurrentDeckCardEle());
+    if (!deckFocusCard) return;
+
+    const touch = event.touches[0];
+  
+    deckFocusCard.scrollY = deckFocusCard.scrollY || 0;
+    deckFocusCard.momentumY = 0;
+
+    deckFocusCard.startX = touch.pageX;
+    deckFocusCard.startY = touch.pageY;
+
+    deckFocusCard.previousX = touch.pageX;
+    deckFocusCard.previousY = touch.pageY;
+  });
+  cardScrollerEle.addEventListener("touchmove", event => {
+    // check if we're in the deck
+    if (document.body.getAttribute("showing") != "deck") return;
+
+    if (!deckFocusCard) return;
+
+    const touch = event.touches[0];
+
+    const currentX = touch.pageX;
+    const currentY = touch.pageY;
+
+    const deltaX = currentX - deckFocusCard.previousX;
+    const deltaY = currentY - deckFocusCard.previousY;
+  
+    deckFocusCard.previousX = currentX;
+    deckFocusCard.previousY = currentY;
+
+    deck.momentumY = deck.momentumY * 0.8;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      return false;
+    }
+    deckFocusCard.scrollY += deltaY;
+    applyDeckTopScroll(deckFocusCard, deckFocusCard.scrollY)
+  });
+  cardScrollerEle.addEventListener("touchend", event => {
+    if (!deckFocusCard) return;
+    
+    // do the flickkkkk
+  });
+
+  cardScrollerEle.addEventListener("click", event => {
+    const currentCardEle = getCurrentCardEle();
+    if (!currentCardEle) return;
+
+    // scroll to focus the clicked card, both in the x and "y" coordinates
+    
+  })
+
   const onCarouselInteraction = event => {
-    console.log('touch');
     const touch = event.touches[0];
     const touchX = touch.clientX - carouselCanvasEle.offsetLeft;
     const scrollRatio = touchX / carouselCanvasEle.clientWidth;
