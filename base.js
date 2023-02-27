@@ -658,7 +658,6 @@ const init = async () => {
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       return false;
     }
-    console.log(deckFocusCard.currentRangeScalar);
     const rangeDelta = getDeckUpgradeRangeScalar(deckFocusCard, deltaY);
     const rangeScalar = deckFocusCard.currentRangeScalar + rangeDelta;
     
