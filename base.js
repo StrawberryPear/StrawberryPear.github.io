@@ -55,26 +55,32 @@ const updateDeck = () => {
   localStorage.setItem("deck", JSON.stringify(deck));
 };
 
+const scrollScroller = async (left) => {
+  cardScrollerEle.scrollTo({left, top: 0, behavior: 'instant'});
+
+  const startTime = Date.now();
+
+  do {
+    await awaitFrame();
+  } while (Date.now() - startTime < 1600);
+}
+
 const setDeckFocusCard = (newDeckFocusCard) => {
   // check if they're different
   if (deckFocusCard == newDeckFocusCard) return; 
 
   deckFocusCard = newDeckFocusCard;
 
-  console.log("changed deckfocus card", deckFocusCard?.getAttribute('uid'));
+  console.trace("changed deckfocus card", deckFocusCard?.getAttribute('uid'));
 };
 
 const getCurrentDeckCardEle = () => {
-  // make sure it's the top level
-  var currentCardEle = getCurrentCardEle();
-  if (!currentCardEle) return;
-  
-  // get the top level
-  while (currentCardEle.parentElement.tagName == "CARD") {
-    currentCardEle = currentCardEle.parentElement;
-  }
+  const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5);
+  const cardWrapperEle = pointEles.find(ele => ["CARDDECKWRAPPER"].includes(ele.tagName));
+  if (!cardWrapperEle) return;
+  const cardEle = cardWrapperEle.querySelector("card");
 
-  return currentCardEle;
+  return cardEle;
 };
 
 const getCurrentCardEle = (canBePurchase) => {
@@ -113,6 +119,62 @@ const showToast = (() => {
   }
 })();
 
+const getDeckUpgradeRangeScalar = (containerCardEle, _scrollY) => {
+  const scrollY = _scrollY * -1.3;
+  // work out how many cards are there to stack
+  const upgradeCardEles = [...containerCardEle.children].filter(ele => ele.tagName == "CARD");
+
+  const cardHeight = containerCardEle.clientHeight;
+
+  const upgradeOffsetY = scrollY;
+
+  // we'll make the top card go down by a card height
+  const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * cardHeight;
+  const rangeScalar = (-upgradeOffsetY) / cardHeight;
+
+  return rangeScalar;
+}
+
+// initially as you scroll down, only the container moves down
+// then after that hits the bottom, the next card starts to go towards the bototm
+// so everything needs to raise till the container hits the bottom.
+const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true) => {
+  if (!containerCardEle) return;
+
+  if (setScalar) {
+    containerCardEle.unsnappedRangeScalar = rangeScalar;
+    containerCardEle.unsnappedTime = Date.now();
+  }
+  containerCardEle.currentRangeScalar = rangeScalar;
+
+  // work out how many cards are there to stack
+  const upgradeCardEles = [...containerCardEle.children].filter(ele => ele.tagName == "CARD");
+
+  const cardHeight = containerCardEle.clientHeight;
+  const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * cardHeight;
+  const containerOffsetY = Math.min(1, rangeScalar) * -cardHeight;
+
+  for (const upgradeCardIndex in upgradeCardEles) {
+    const upgradeCardEle = upgradeCardEles[upgradeCardIndex];
+
+    const offsetCardOffsetY = rangeCardOffsetY * (parseInt(upgradeCardIndex) + 1);
+    const upgradeScalar = Math.max(-0, Math.min(1, rangeScalar - (parseInt(upgradeCardIndex) + 1)));
+
+    const minPoint = 0;
+    const maxPoint = cardHeight;
+
+    const range = maxPoint - minPoint;
+    const rangeValue = range * upgradeScalar;
+
+    const scrollDown = containerOffsetY + rangeValue - Math.max(containerOffsetY - offsetCardOffsetY, offsetCardOffsetY);
+
+    upgradeCardEle.style.setProperty("transform", `translateY(${scrollDown}px) translateZ(-${upgradeCardIndex + 1}px)`);
+  }
+
+  containerCardEle.style.setProperty("transform", `translateY(${-containerOffsetY}px)`);
+  // find the snap point stuff
+}
+
 const addCharacterToDeck = (data, updateDeckStore = true) => {
   const uid = data.uid;
   if (!uid) return;
@@ -124,8 +186,11 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
   const cardEle = libraryCardEles.find(ele => ele.getAttribute('uid') == uid);
   if (!cardEle) return;
 
+  const wrapperEle = document.createElement("cardDeckWrapper");
+  cardDeckListEle.insertBefore(wrapperEle, addCharacterButton);
+
   const cardCloneEle = cardEle.cloneNode(true);
-  cardDeckListEle.insertBefore(cardCloneEle, addCharacterButton);
+  wrapperEle.append(cardCloneEle);
 
   // create mark boxes...
   (cardStore.markBoxes || []).forEach(([boxX, boxY, marked]) => {
@@ -153,8 +218,9 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
       addUpgradeToCharacter(upgrade.uid, cardCloneEle, data, false);
     })
   }
+  applyDeckCardTopScroll(cardCloneEle, 0, false);
 
-  return cardCloneEle
+  return cardCloneEle;
 };
 
 const addUpgradeToCharacter = (upgradeUID, characterCardEle, deckCharacter, updateDeckStore = true) => {
@@ -287,10 +353,10 @@ const init = async () => {
         
         applyFilters();
         applyCarousel();
-
-        cardScrollerEle.scrollTo(0, 0);
       });
     });
+  scrollScroller(0);
+  // cardScrollerEle.scrollTo({left: 0, top: 0, behavior: 'instant'});
     
   applyFilters();
   applyCarousel();
@@ -312,7 +378,8 @@ const init = async () => {
       await awaitFrame();
 
       const cardScrollX = libraryFocusCard?.offsetLeft || 0;
-      cardScrollerEle.scrollTo(cardScrollX, 0);
+      // cardScrollerEle.scrollTo({left: cardScrollX, top: 0, behavior: 'instant'});
+      scrollScroller(cardScrollX);
     }
   });
   showDeckButton.addEventListener('click', async () => {
@@ -330,21 +397,25 @@ const init = async () => {
     while (Date.now() - time < 600) {
       await awaitFrame();
 
-      const cardScrollX = deckFocusCard?.offsetLeft || 0;
-      cardScrollerEle.scrollTo(cardScrollX, 0);
+      const cardScrollX = deckFocusCard?.parentElement.offsetLeft || 0;
+      scrollScroller(cardScrollX);
+      // cardScrollerEle.scrollTo({left: cardScrollX, top: 0, behavior: 'instant'});
     }
   });
   addUpgradeButton.addEventListener('click', () => {
     if (document.body.getAttribute("showing") !== 'deck') return;
 
     const deckCurrentCardEle = getCurrentDeckCardEle();
-    if (!deckCurrentCardEle) return;
+    if (!deckCurrentCardEle) {
+      showToast("Can't attach upgrade to that");
+      return;
+    }
 
     const uid = deckCurrentCardEle.getAttribute("uid");
     const cardStore = store[uid];
     if (!cardStore) return;
 
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(deckCurrentCardEle);
+    const currentCardIndex = [...cardDeckListEle.children].indexOf(deckCurrentCardEle.parentElement);
 
     // TODO: get what upgrades the character can use
     setSubFilter('upgrade', { classes: cardStore.classes, upgradeType: cardStore.upgradeTypes});
@@ -363,20 +434,38 @@ const init = async () => {
   });
 
   removeFromDeckButton.addEventListener('click', () => {
-    const currentCardEle = getCurrentCardEle();
+    const currentCardEle = getCurrentDeckCardEle();
 
     if (!currentCardEle) return;
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle);
 
-    const confirmValue = confirm('Are you sure you want to remove this card from this deck?');
-    if (!confirmValue) return;
+    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle.parentElement);
 
+    if (currentCardIndex == -1) {
+      showToast('Can\'t remove that');
+      return;
+    };
 
-    deck.splice(currentCardIndex, 1);
+    const currentFocusSubIndex = currentCardEle.currentRangeScalar || 0;
+
+    if (!currentFocusSubIndex) {
+      const confirmValue = confirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
+      if (!confirmValue) return;
+
+      deck.splice(currentCardIndex, 1);
+      currentCardEle.parentElement.remove();
+    } else {
+      const upgradeIndex = currentFocusSubIndex - 1;
+
+      deck[currentCardIndex].upgrades.splice(upgradeIndex, 1);
+      const upgradeCardEle = [...currentCardEle.querySelectorAll("card")][upgradeIndex];
+
+      upgradeCardEle.remove();
+
+      applyDeckCardTopScroll(currentCardEle, 0);
+    }
     updateDeck();
 
     showToast(`Card removed from deck`);
-    currentCardEle.remove();
   });
   addToDeckButton.addEventListener('click', () => {
     const currentCardEle = getCurrentCardEle();
@@ -393,7 +482,6 @@ const init = async () => {
     showDeckButton.click();
   });
   attachUpgradeButton.addEventListener('click', (e) => {
-    debugger;
     if (!attachCharacter) return;
 
     const currentCardEle = getCurrentCardEle();
@@ -426,7 +514,8 @@ const init = async () => {
       applyCarousel();
 
       const scrollLeft = cardEle.offsetLeft;
-      cardScrollerEle.scrollTo(scrollLeft, 0);
+      scrollScroller(scrollLeft);
+      // cardScrollerEle.scrollTo({left: scrollLeft, top: 0, behavior: 'instant'});
 
       return;
     }
@@ -524,20 +613,7 @@ const init = async () => {
   cardScrollerEle.addEventListener("scroll", event => {
     updateCarousel();
     //TODO make the buttons update
-
-    if (document.body.getAttribute("showing") !== "deck") return;
-    setDeckFocusCard(getCurrentDeckCardEle());
-
-    if (scrollTimeout) clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      if (document.body.getAttribute("showing") !== "deck") return;
-      setDeckFocusCard(getCurrentDeckCardEle());
-    }, 200);
   });
-
-  const applyDeckTopScroll = (cardEle, scrollY) => {
-    cardEle.style.setProperty("transform", `translateY(${scrollY}px)`);
-  }
 
   cardScrollerEle.addEventListener("touchstart", event => {
     // check if we're in the deck
@@ -548,7 +624,9 @@ const init = async () => {
 
     const touch = event.touches[0];
   
-    deckFocusCard.scrollY = deckFocusCard.scrollY || 0;
+    deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
+    
+    deckFocusCard.scrollY = 0;
     deckFocusCard.momentumY = 0;
 
     deckFocusCard.startX = touch.pageX;
@@ -574,18 +652,48 @@ const init = async () => {
     deckFocusCard.previousX = currentX;
     deckFocusCard.previousY = currentY;
 
-    deck.momentumY = deck.momentumY * 0.8;
+    deckFocusCard.momentumY = deckFocusCard.momentumY * 0.8;
 
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       return false;
     }
-    deckFocusCard.scrollY += deltaY;
-    applyDeckTopScroll(deckFocusCard, deckFocusCard.scrollY)
+    console.log(deckFocusCard.currentRangeScalar);
+    const rangeDelta = getDeckUpgradeRangeScalar(deckFocusCard, deltaY);
+    const rangeScalar = deckFocusCard.currentRangeScalar + rangeDelta;
+    
+    deckFocusCard.momentumY += (rangeDelta || 0);
+
+    applyDeckCardTopScroll(deckFocusCard, rangeScalar);
   });
-  cardScrollerEle.addEventListener("touchend", event => {
+  cardScrollerEle.addEventListener("touchend", async (event) => {
     if (!deckFocusCard) return;
+    const focusCard = deckFocusCard;
+
+    const upgradeCardEles = [...focusCard.children].filter(ele => ele.tagName == "CARD");
     
     // do the flickkkkk
+    // animate it toward the closest scalar;
+    const unsnappedTime = focusCard.unsnappedTime;
+    const unsnappedRangeScalar = focusCard.unsnappedRangeScalar;
+    const targetRangeScalar = Math.min(upgradeCardEles.length, Math.max(0, Math.round(unsnappedRangeScalar + focusCard.momentumY)));
+
+    // animate to the card.
+    const animationDuration = 200;
+
+    do {
+      if (unsnappedTime != focusCard.unsnappedTime) return;
+      await awaitFrame();
+
+      var delta = Math.min(1, (Date.now() - unsnappedTime) / animationDuration);
+      const tweenDelta = delta * delta;
+
+      const range = targetRangeScalar - unsnappedRangeScalar;
+
+      const newRangeScalar = unsnappedRangeScalar + range * tweenDelta;
+
+      applyDeckCardTopScroll(focusCard, newRangeScalar, false);
+      // move the thing toward it.
+    } while (delta < 1);
   });
 
   cardScrollerEle.addEventListener("click", event => {
@@ -602,7 +710,8 @@ const init = async () => {
     const scrollRatio = touchX / carouselCanvasEle.clientWidth;
     const newScroll = cardLibraryListEle.clientWidth * scrollRatio;
 
-    cardScrollerEle.scrollTo(newScroll, 0);
+    scrollScroller(cardScrollX);
+    // cardScrollerEle.scrollTo({left: newScroll, top: 0, behavior: 'instant'});
   }
 
   carouselEle.addEventListener("touchstart", onCarouselInteraction);

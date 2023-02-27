@@ -81,6 +81,20 @@ card, purchase, import, add {
   scroll-snap-align: center;
   transform-style: preserve-3d;
 }
+cardDeckWrapper {
+  position: relative;
+  width:var(--card-width);
+  height: var(--card-height);
+  display: inline-block;
+  border-radius: 3.8%;
+  margin: 0 min(2vw, 20px);
+  scroll-snap-align: center;
+  padding-bottom: 64px;
+}
+cardDeckWrapper card {
+  scroll-snap-align: none;
+  margin: 0;
+}
 purchase, import, add {
   height:var(--card-width);
   border-radius: 0;
@@ -310,8 +324,9 @@ cardButtons {
   text-align: center;
   width: 100%;
   justify-items: center;
-  margin-bottom: calc(var(--screen-height) * 0.01);
+  padding-bottom: calc(var(--screen-height) * 0.01);
   align-items: end;
+  background: linear-gradient(00deg, #000a, transparent);
 }
 
 cardButton {
@@ -683,9 +698,12 @@ markBox.marked {
 }
 
 card > card {
-    /* z-index: -1; */
-    transform: translate(0px, -95px) translateZ(-5px);
-    margin: 0;
+  position: absolute;
+  transform: translateY(-73.85px) translateZ(-1px);
+  margin: 0;
+}
+card > card:nth-of-type(2) {
+  transform: translateY(-90px) translateZ(-2px);
 }
 
 body[showing="deck"] cardButtons {
@@ -694,7 +712,9 @@ body[showing="deck"] cardButtons {
 }
 
 body[showing="deck"] cardScrollerContainer {
-    padding-bottom: 64px;
+  max-height: calc(var(--screen-height));
+  padding-top: calc(var(--nav-height));
+  top: calc(-1 * var(--nav-height));
 }
 
 cardlist.deck {
