@@ -45,7 +45,7 @@ const awaitFrame = () => new Promise(resolve => {
 
 const updateDeck = () => {
   // work out total points in deck :D
-  const cards = deck.map(id => store[id]);
+  const cards = deck.map(deckStore => [deckStore, ...(deckStore.upgrades || [])]).flat().map(deckStore => store[deckStore.uid]);
   const cost = cards.reduce((sum, card) => card ? sum + (parseInt(card.cost) || 0) : sum, 0);
 
   const deckCostEle = document.getElementById('points');
@@ -190,6 +190,7 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
   cardDeckListEle.insertBefore(wrapperEle, addCharacterButton);
 
   const cardCloneEle = cardEle.cloneNode(true);
+  cardCloneEle.className = "";
   wrapperEle.append(cardCloneEle);
 
   // create mark boxes...
@@ -710,7 +711,7 @@ const init = async () => {
     const scrollRatio = touchX / carouselCanvasEle.clientWidth;
     const newScroll = cardLibraryListEle.clientWidth * scrollRatio;
 
-    scrollScroller(cardScrollX);
+    scrollScroller(newScroll);
     // cardScrollerEle.scrollTo({left: newScroll, top: 0, behavior: 'instant'});
   }
 

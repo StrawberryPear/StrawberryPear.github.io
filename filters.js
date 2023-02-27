@@ -17,6 +17,7 @@ const filterShopEle = document.querySelector('cardControl.filterShop');
 
 var searchText = '';
 var subFilter;
+var specifiedFilters;
 const filters = {
   character: {
     ele: filterCharactersEle,
@@ -85,10 +86,11 @@ const filters = {
   }
 };
 
-const setSubFilter = (newFilter) => {
+const setSubFilter = (newFilter, newSpecifiedFilters) => {
   if (subFilter == newFilter) return;
 
   subFilter = newFilter;
+  specifiedFilters = newSpecifiedFilters;
   document.body.setAttribute("subFilter", newFilter || "");
 
   // clear all the filters
@@ -107,31 +109,65 @@ const applyFilters = () => {
 
   for (const cardEle of libraryCardEles) {
     const uid = cardEle.getAttribute('uid');
-    const storeItem = store[uid];
+    const cardStore = store[uid];
 
-    if (!storeItem) {
+    if (!cardStore) {
       cardEle.classList.toggle('inactive', subFilter || !allFalse || !!searchText.trim());
 
       continue;
     }
 
     const filterShow = Object.values(filters).find(o => {
-      return o.active && storeItem.base.match(o.filter);
+      return o.active && cardStore.base.match(o.filter);
     });
 
-    const searchShow = storeItem.base.toLowerCase().includes(searchText.toLowerCase());
+    const searchShow = cardStore.base.toLowerCase().includes(searchText.toLowerCase());
 
     const subFilterShow = !subFilter || (() => {
-      if (subFilter == 'upgrade') {
-        
-        return storeItem.types.match(/(upgrade|relic)/i);
+      if (subFilter == 'upgrade') {  
+        return cardStore.types.match(/(upgrade|relic)/i);
       } 
       if (subFilter == 'character') {
-        return storeItem.types.match(/(character|summon)/i);
+        return cardStore.types.match(/(character|summon)/i);
       }
     })();
 
-    cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow);
+    const specifiedFiltersShow = !!specifiedFilters && (() => {
+      return Object.keys(specifiedFilters)
+        .reduce((shouldHide, key) => {
+          const keyValue = specifiedFilters[key];
+
+          if (key == "upgradeType") {
+            if (cardStore.types == "relic") return shouldHide;
+
+            // do some fucky
+            // separate out these upgradeTypes
+            const upgradeTypes = keyValue.split(" ");
+
+            // check if the cardStore has a type matching
+            const cardStoreTypes = cardStore.types.split(" ");
+
+            const foundType = cardStoreTypes.find(type => upgradeTypes.includes(type));
+
+            return !foundType || shouldHide;
+          } else if (key == "classes") {
+            if (cardStore.classes == "") return shouldHide;
+
+            const filterClasses = keyValue.split(" ");
+            const cardStoreClasses = cardStore.classes.split(" ");
+
+            const foundClass = cardStoreClasses.find(cls => filterClasses.includes(cls));
+
+            return !foundClass || shouldHide;
+          }
+
+          return shouldHide;
+        }, false);
+    })();
+
+    console.log(specifiedFiltersShow);
+
+    cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow || specifiedFiltersShow);
   }
 
   // check purchases
