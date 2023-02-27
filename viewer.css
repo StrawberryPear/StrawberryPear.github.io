@@ -128,7 +128,7 @@ purchase[uid="Temple of Justice"] {
 purchase[uid="Battle Pigs"] {
   background-image: url('./assets/cardpacks/Battle-Pig-Faction-Set.jpg');
 }
-purchase[uid="Adventurer Gear"] {
+purchase[uid="Adventure Gear"] {
   background-image: url('./assets/cardpacks/Adventure-Gear.jpg');
 }
 purchase[uid="The Lone Guard"] {
@@ -146,7 +146,7 @@ purchase[uid="Wretched Hive"] {
 purchase[uid="Moldorf Expedition"] {
   background-image: url('./assets/cardpacks/moldorf-expedition-faction-set.jpg');
 }
-purchase[uid="Apostels of the Deep"] {
+purchase[uid="Apostles of the Deep"] {
   background-image: url('./assets/cardpacks/apostels-of-the-deep.jpg');
 }
 purchase[uid="Kingdoms of Akadh"] {
