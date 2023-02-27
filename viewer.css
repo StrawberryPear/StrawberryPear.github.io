@@ -195,6 +195,7 @@ nav {
   justify-content: space-between;
   align-items: center;
   min-height: var(--nav-height);
+  z-index: 2;
 }
 call {
   display: inline-block;
