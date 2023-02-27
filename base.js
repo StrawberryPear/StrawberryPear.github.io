@@ -437,7 +437,10 @@ const init = async () => {
   removeFromDeckButton.addEventListener('click', () => {
     const currentCardEle = getCurrentDeckCardEle();
 
-    if (!currentCardEle) return;
+    if (!currentCardEle) {
+      showToast('Can\'t remove that');
+      return;
+    }
 
     const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle.parentElement);
 
