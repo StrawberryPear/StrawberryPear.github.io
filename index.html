@@ -3,126 +3,128 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Relicblade Deck Builder">
+    <link rel="apple-touch-startup-image" href="./assets/launch.png">
+    <link rel="apple-touch-icon" href="./assets/icon.png">
 
     <title>Relicblade Deck Builder</title>
 
-    <link rel="stylesheet" type="text/css" href="viewer.css">
+    <link rel="stylesheet" type="text/css" href="viewer.css?v=2">
 
     <script src="./pdf.js"></script>
     <script src="./umd.js"></script>
   </head>
 
   <body class="loading" showing="deck" subfilter="">
-    <nav>
-      <call><span id="title">Deck Builder</span> <span id="points"></span></call>
-      <ham></ham>
-    </nav>
+    <main>
+      <nav>
+        <call><span id="title">Deck Builder</span> <span id="points"></span></call>
+        <ham></ham>
+      </nav>
 
-    <cardTopControls class="library">
-      <searchContainer>
-        <input type="text" />
-        <searchIcon type="view"></searchIcon>
-        <searchIcon type="clear"></searchIcon>
-      </searchContainer>
-      <cardControl class="library filterCharacter inactive"></cardControl>
-      <cardControl type="character" class="library filterAdvocate inactive"></cardControl>
-      <cardControl type="character" class="library filterAdversary inactive"></cardControl>
-      <cardControl type="character" class="library filterNeutral inactive"></cardControl>
-      <cardControl type="" class="library filterUpgrade inactive"></cardControl>
-      <cardControl type="upgrade" class="library filterTactic inactive"></cardControl>
-      <cardControl type="upgrade" class="library filterPotion inactive"></cardControl>
-      <cardControl type="upgrade" class="library filterWeapon inactive"></cardControl>
-      <cardControl type="upgrade" class="library filterItem inactive"></cardControl>
-      <cardControl type="upgrade" class="library filterSpell inactive"></cardControl>
-      <cardControl type="upgrade" class="library filterRelicUpgrade inactive"></cardControl>
-      <cardControl type="" class="library filterRelic inactive"></cardControl>
-      <cardControl type="" class="library filterShop inactive"></cardControl>
-      <topButton class="grid"></topButton>
-    </cardTopControls>
+      <cardTopControls class="library">
+        <searchContainer>
+          <input type="text" />
+          <searchIcon type="view"></searchIcon>
+          <searchIcon type="clear"></searchIcon>
+        </searchContainer>
+        <cardControl class="library filterCharacter inactive"></cardControl>
+        <cardControl type="character" class="library filterAdvocate inactive"></cardControl>
+        <cardControl type="character" class="library filterAdversary inactive"></cardControl>
+        <cardControl type="character" class="library filterNeutral inactive"></cardControl>
+        <cardControl type="" class="library filterUpgrade inactive"></cardControl>
+        <cardControl type="upgrade" class="library filterTactic inactive"></cardControl>
+        <cardControl type="upgrade" class="library filterPotion inactive"></cardControl>
+        <cardControl type="upgrade" class="library filterWeapon inactive"></cardControl>
+        <cardControl type="upgrade" class="library filterItem inactive"></cardControl>
+        <cardControl type="upgrade" class="library filterSpell inactive"></cardControl>
+        <cardControl type="upgrade" class="library filterRelicUpgrade inactive"></cardControl>
+        <cardControl type="" class="library filterRelic inactive"></cardControl>
+        <cardControl type="" class="library filterShop inactive"></cardControl>
+        <topButton class="grid"></topButton>
+      </cardTopControls>
 
-    <cardScrollerContainer>
-      <cardScroller>
-        <cardList class="library">
-          <purchase uid="Temple of Justice">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Battle Pigs">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Adventure Gear">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="The Lone Guard">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Bone and Darkness">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="The Wilderkin">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Wretched Hive">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Lostwood Enclave">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Moldorf Expedition">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Apostles of the Deep">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Kingdoms of Akadh">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Singular Champions 1">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Singular Champions 2">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Singular Champions 3">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Singular Champions 4">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Relics of the Volge">
-            <label>Purchase Cardset, $2.99</label>
-          </purchase>
-          <purchase uid="Storms of Kural">
-            <label>Purchase Cardset, $15.00</label>
-          </purchase>
-          <import uid="Add Own">
-            <label>Add Cards from PDF</label>
-            <label class="fileUpload"><input type='file' /></label>
-          </import>
-        </cardList>
-        <cardList class="deck"><add><label>Add Character</label></add></cardList>
-      </cardScroller>
-    </cardScrollerContainer>
+      <cardScrollerContainer>
+        <cardScroller>
+          <cardList class="library">
+            <purchase uid="Temple of Justice">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Battle Pigs">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Adventure Gear">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="The Lone Guard">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Bone and Darkness">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="The Wilderkin">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Wretched Hive">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Lostwood Enclave">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Moldorf Expedition">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Apostles of the Deep">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Kingdoms of Akadh">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Singular Champions 1">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Singular Champions 2">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Singular Champions 3">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Singular Champions 4">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Relics of the Volge">
+              <label>Purchase Cardset, $2.99</label>
+            </purchase>
+            <purchase uid="Storms of Kural">
+              <label>Purchase Cardset, $15.00</label>
+            </purchase>
+            <import uid="Add Own">
+              <label>Add Cards from PDF</label>
+              <label class="fileUpload"><input type='file' /></label>
+            </import>
+          </cardList>
+          <cardList class="deck"><add><label>Add Character</label></add></cardList>
+        </cardScroller>
+      </cardScrollerContainer>
 
-    <cardCarousel>
-      <canvas></canvas>
-    </cardCarousel>
-    
-    <cardButtons>
-      <cardButton class="deck removeFromDeck">Remove</cardButton>
-      <cardButton class="deck showLibrary">Show Library</cardButton>
-      <cardButton class="deck addUpgrade">Add Upgrade</cardButton>
+      <cardCarousel>
+        <canvas></canvas>
+      </cardCarousel>
+      
+      <cardButtons>
+        <cardButton class="deck removeFromDeck">Remove</cardButton>
+        <cardButton class="deck showLibrary">Show Library</cardButton>
+        <cardButton class="deck addUpgrade">Add Upgrade</cardButton>
 
-      <cardButton class="library showDeck">Return</cardButton>
-      <cardButton class="library addToDeck">Add to Deck</cardButton>
-      <cardButton class="library attachUpgrade">Attach Upgrade</cardButton>
-    </cardButtons>
+        <cardButton class="library showDeck">Return</cardButton>
+        <cardButton class="library addToDeck">Add to Deck</cardButton>
+        <cardButton class="library attachUpgrade">Attach Upgrade</cardButton>
+      </cardButtons>
 
-    <toast></toast>
-<!-- 
-    <foot>
-      <footControl class="showLibrary">Library</footControl>
-      <footControl class="showDeck">Deck <span id="points"></span></footControl>
-    </foot> -->
+      <toast></toast>
+    </main>
     
     <helpOverlay class="hidden">
       <helpMedalion></helpMedalion>
@@ -143,7 +145,6 @@
       <menuControl class="library removeLibraryCard">Remove Card From Library</menuControl>
       <label class="menuControl fileUpload">Add Cards from PDF<input id="fileUpload" type='file' /></label>
     </overlayMenu>
-
     <script src="./storeNew.js"></script>
     <script src="./load.js"></script>
     <script src="./filters.js"></script>

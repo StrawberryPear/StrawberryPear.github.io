@@ -11,7 +11,7 @@ const store = {
     },
     "Temple of Justice": {
         "uid": "Temple of Justice",
-        "base": "temple of justice questing knight cleric of justice thief advocate purchase",
+        "base": "temple of justice character upgrade questing knight cleric of justice thief advocate purchase",
         "cost": "0",
         "name": "temple of justice questing of justice thief",
         "classes": "cleric knight",
@@ -21,7 +21,7 @@ const store = {
     },
     "Lostwood Enclave": {
         "uid": "Lostwood Enclave",
-        "base": "lostwood enclave wild elf druid cave bear arboleth sentinel wild elf pathfinder advocate purchase",
+        "base": "lostwood enclave character upgrade wild elf druid cave bear arboleth sentinel wild elf pathfinder advocate purchase",
         "cost": "0",
         "name": "lostwood enclave wild elf cave bear arboleth sentinel wild elf pathfinder",
         "classes": "druid",
@@ -41,7 +41,7 @@ const store = {
     },
     "Battle Pigs": {
         "uid": "Battle Pigs",
-        "base": "warlord pig axe pig shield pig raider pig soldier pig adversary purchase",
+        "base": "Battle Pigs character upgrade warlord pig axe pig shield pig raider pig soldier pig adversary purchase",
         "cost": "0",
         "name": "axe raider soldier",
         "classes": "shield pig warlord",
@@ -51,7 +51,7 @@ const store = {
     },
     "Bone and Darkness": {
         "uid": "Bone and Darkness",
-        "base": "dark watcher dark wanderer bone stalker bone construct adversary purchase",
+        "base": "Bone and Darkness character upgrade dark watcher dark wanderer bone stalker bone construct adversary purchase",
         "cost": "0",
         "name": "dark watcher dark wanderer stalker",
         "classes": "bone",
@@ -61,7 +61,7 @@ const store = {
     },
     "Apostles of the Deep": {
         "uid": "Apostles of the Deep",
-        "base": "eel sorcerer shark warrior giblin fishers adversary purchase",
+        "base": "Apostles of the Deep character upgrade relic eel sorcerer shark warrior giblin fishers adversary purchase",
         "cost": "0",
         "name": "eel sorcerer shark warrior giblin fishers",
         "classes": "",
@@ -71,7 +71,7 @@ const store = {
     },
     "Kingdoms of Akadh": {
         "uid": "Kingdoms of Akadh",
-        "base": "akadh magician akadh gungob akadh immortal magic carpet neutral purchase",
+        "base": "Kingdoms of Akadh character upgrade akadh magician akadh gungob akadh immortal magic carpet neutral purchase",
         "cost": "0",
         "name": "akadh magician akadh gungob akadh immortal magic carpet",
         "classes": "",
@@ -81,7 +81,7 @@ const store = {
     },
     "Moldorf Expedition": {
         "uid": "Moldorf Expedition",
-        "base": "neutral purchase",
+        "base": "Moldorf Expedition character upgrade neutral purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -91,7 +91,7 @@ const store = {
     },
     "Wretched Hive": {
         "uid": "Wretched Hive",
-        "base": "adversary purchase",
+        "base": "Wretched Hive character upgrade adversary purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -101,7 +101,7 @@ const store = {
     },
     "Relics of the Volge": {
         "uid": "Relics of the Volge",
-        "base": "relic purchase relic purchase",
+        "base": "Relics of the Volge relic purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -111,7 +111,7 @@ const store = {
     },
     "Singular Champions 1": {
         "uid": "Singular Champions 1",
-        "base": "advocate adversary neutral purchase",
+        "base": "Singular Champions character upgrade advocate adversary neutral purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -121,7 +121,7 @@ const store = {
     },
     "Singular Champions 2": {
         "uid": "Singular Champions 2",
-        "base": "advocate adversary neutral purchase",
+        "base": "Singular Champions character upgrade advocate adversary neutral purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -131,17 +131,17 @@ const store = {
     },
     "Singular Champions 3": {
         "uid": "Singular Champions 3",
-        "base": "advocate adversary neutral purchase",
+        "base": "Singular Champions character upgrade advocate adversary neutral purchase",
         "cost": "0",
         "name": "",
         "classes": "",
         "keywords": "ad",
         "types": "purchase",
-        "factions": "advocate adversary neutral"
+        "factions": "character upgrade advocate adversary neutral"
     },
     "Singular Champions 4": {
         "uid": "Singular Champions 4",
-        "base": "advocate adversary neutral purchase",
+        "base": "Singular Champions character upgrade advocate adversary neutral purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -151,7 +151,7 @@ const store = {
     },
     "Storms of Kural": {
         "uid": "Storms of Kural",
-        "base": "advocate adversary neutral purchase",
+        "base": "Storms of Kural character upgrade advocate adversary neutral purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -161,7 +161,7 @@ const store = {
     },
     "The Wilderkin": {
         "uid": "The Wilderkin",
-        "base": "advocate purchase",
+        "base": "The Wilderkin character upgrade advocate purchase",
         "cost": "0",
         "name": "",
         "classes": "",
@@ -171,7 +171,7 @@ const store = {
     },
     "The Lone Guard": {
         "uid": "The Lone Guard",
-        "base": "advocate purchase",
+        "base": "The Lone Guard character upgrade advocate purchase",
         "cost": "0",
         "name": "",
         "classes": "",

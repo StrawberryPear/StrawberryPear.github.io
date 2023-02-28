@@ -22,17 +22,13 @@ body {
   margin: 0;
   height: 100%;
   width: 100%;
-  background: #091e21;
+  background: #000;
   font-family: "proxima-nova","Helvetica Neue",Helvetica,Arial,sans-serif;
   color: #fff;
   box-sizing: border-box;
   position: fixed;
   height: calc(var(--screen-height));
   max-height: calc(var(--screen-height));
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  justify-content: space-between;
 }
 cardScroller {
   display: block;
@@ -277,7 +273,12 @@ cardControl::before {
   align-items: center;
   font-family: 'tradeWinds';
   font-size: 20px;
-  padding-top: 4px;
+  /* padding-top: 4px; */
+  height: 100%;
+  background-size: auto 58%;
+  background-position: center;
+  background-repeat: no-repeat;
+  right: 4px;
 }
 cardControl.inactive {
 }
@@ -295,19 +296,24 @@ cardControl.filterNeutral::before {
   content: 'N';
 }
 cardControl.filterTactic::before {
-  content: 'T';
+  content: '';
+  background-image: url('./assets/tactic.png');
 }
 cardControl.filterPotion::before {
-  content: 'P';
+  content: '';
+  background-image: url('./assets/potion.png');
 }
 cardControl.filterWeapon::before {
-  content: 'W';
+  content: '';
+  background-image: url('./assets/weapon.png');
 }
 cardControl.filterItem::before {
-  content: 'I';
+  content: '';
+  background-image: url('./assets/item.png');
 }
 cardControl.filterSpell::before {
-  content: 'S';
+  content: '';
+  background-image: url('./assets/spell.png');
 }
 cardControl.filterRelic::before, cardControl.filterRelicUpgrade::before {
   content: 'R';
@@ -723,3 +729,12 @@ cardlist.deck {
 }
 
 cardcontrol:not(.inactive) {background: #fff;color: #000;}
+
+main {
+  background: #091e21;
+  position: relative;
+  height: var(--screen-height);
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}

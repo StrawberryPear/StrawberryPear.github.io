@@ -165,8 +165,6 @@ const applyFilters = () => {
         }, false);
     })();
 
-    console.log(specifiedFiltersShow);
-
     cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow || specifiedFiltersShow);
   }
 
