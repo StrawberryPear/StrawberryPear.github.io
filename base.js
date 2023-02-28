@@ -628,24 +628,29 @@ const init = async () => {
 
     const touch = event.touches[0];
   
-    deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
-    
-    deckFocusCard.scrollY = 0;
-    deckFocusCard.momentumY = 0;
-
-    deckFocusCard.startX = touch.pageX;
-    deckFocusCard.startY = touch.pageY;
-
-    deckFocusCard.previousX = touch.pageX;
-    deckFocusCard.previousY = touch.pageY;
+    deckFocusCard.touchStart = Date.now();
+    deckFocusCard.isDragging = false;
   });
   cardScrollerEle.addEventListener("touchmove", event => {
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
 
     if (!deckFocusCard) return;
-
+    if (Date.now() - deckFocusCard.touchStart < 100) return;
+    
     const touch = event.touches[0];
+    if (!deckFocusCard.isDragging) {
+        
+      deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
+      
+      deckFocusCard.scrollY = 0;
+      deckFocusCard.momentumY = 0;
+
+      deckFocusCard.previousX = touch.pageX;
+      deckFocusCard.previousY = touch.pageY;
+
+      deckFocusCard.isDragging = true;
+    }
 
     const currentX = touch.pageX;
     const currentY = touch.pageY;
@@ -672,15 +677,17 @@ const init = async () => {
   });
   cardScrollerEle.addEventListener("touchend", async (event) => {
     if (!deckFocusCard) return;
+    if (!deckFocusCard.isDragging) return;
+
     const focusCard = deckFocusCard;
 
     const upgradeCardEles = [...focusCard.children].filter(ele => ele.tagName == "CARD");
-    
+
     // do the flickkkkk
     // animate it toward the closest scalar;
     const unsnappedTime = focusCard.unsnappedTime;
     const unsnappedRangeScalar = focusCard.unsnappedRangeScalar;
-    const targetRangeScalar = Math.min(upgradeCardEles.length, Math.max(0, Math.round(unsnappedRangeScalar + focusCard.momentumY)));
+    const targetRangeScalar = Math.min(upgradeCardEles.length, Math.max(0, Math.round(unsnappedRangeScalar + focusCard.momentumY * 5)));
 
     // animate to the card.
     const animationDuration = 200;

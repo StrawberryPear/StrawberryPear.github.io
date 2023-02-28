@@ -490,10 +490,10 @@ overlayMenu, loadingOverlay {
   align-content: center;
   justify-content: center;
   align-items: center;
-
   opacity: 1;
   transition: opacity 0.2s;
   user-select: none;
+  z-index: 10;
 }
 loadingOverlay {
   pointer-events: all;
