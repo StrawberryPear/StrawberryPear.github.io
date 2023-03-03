@@ -26,7 +26,6 @@ const cardTopControlsEle = document.querySelector('cardTopControls');
 
 const searchInputEle = document.querySelector('searchContainer input');
 const searchInputClearEle = document.querySelector('searchContainer searchicon[type="clear"]');
-const removeLibraryCardEle = document.querySelector('menuControl.removeLibraryCard');
 const gridButtonEle = document.querySelector('topButton.grid');
 
 const removeFromDeckButton = document.querySelector("cardButton.removeFromDeck");
@@ -37,6 +36,14 @@ const addToDeckButton = document.querySelector("cardButton.addToDeck");
 const addCharacterButton = document.querySelector("add");
 const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
 
+const deckTitleInput = document.querySelector("input#title");
+const deckTitleInputMirror = document.querySelector("deckTitleMirror#titleMirror");
+
+const removeLibraryCardEle = document.querySelector('menuControl.removeLibraryCard');
+const returnEle = document.querySelector('menuControl.return');
+const newDeckEle = document.querySelector('menuControl.removeLibraryCard');
+const saveDeckEle = document.querySelector('menuControl.removeLibraryCard');
+const loadDeckEle = document.querySelector('menuControl.removeLibraryCard');
 const overlayMenuEle = document.querySelector('overlayMenu');
 
 const awaitFrame = () => new Promise(resolve => {
@@ -70,8 +77,6 @@ const setDeckFocusCard = (newDeckFocusCard) => {
   if (deckFocusCard == newDeckFocusCard) return; 
 
   deckFocusCard = newDeckFocusCard;
-
-  console.trace("changed deckfocus card", deckFocusCard?.getAttribute('uid'));
 };
 
 const getCurrentDeckCardEle = () => {
@@ -171,7 +176,10 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
     upgradeCardEle.style.setProperty("transform", `translateY(${scrollDown}px) translateZ(-${upgradeCardIndex + 1}px)`);
   }
 
-  containerCardEle.style.setProperty("transform", `translateY(${-containerOffsetY}px)`);
+  // slowly move the container down
+  const range = rangeCardOffsetY * rangeScalar * 0.5;
+
+  containerCardEle.style.setProperty("transform", `translateY(${-containerOffsetY + range}px)`);
   // find the snap point stuff
 }
 
@@ -257,6 +265,12 @@ const addUpgradeToCharacter = (upgradeUID, characterCardEle, deckCharacter, upda
     deckCharacter.upgrades.push({
       uid: upgradeUID
     });
+    awaitFrame()
+    .then(awaitFrame)
+    .then(
+      () => {
+      applyDeckCardTopScroll(characterCardEle, 0, false);
+      });
   }
 
   return cardCloneEle
@@ -571,9 +585,9 @@ const init = async () => {
     cardTopControlsEle.classList.toggle('searched', !!searchText);
   })
 
-  removeLibraryCardEle.addEventListener('click', async (e) => {
+  removeLibraryCardEle.addEventListener('click', async (event) => {
     overlayMenuEle.className = 'hidden';
-    e.preventDefault();
+    if (event.cancelable) event.preventDefault();
 
     setTimeout(async () => {
       const currentCardEle = getCurrentCardEle();
@@ -636,7 +650,6 @@ const init = async () => {
     if (document.body.getAttribute("showing") != "deck") return;
 
     if (!deckFocusCard) return;
-    if (Date.now() - deckFocusCard.touchStart < 100) return;
     
     const touch = event.touches[0];
     if (!deckFocusCard.isDragging) {
@@ -666,7 +679,7 @@ const init = async () => {
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
       return false;
     }
-    event.preventDefault();
+    if (event.cancelable) event.preventDefault();
     
     const rangeDelta = getDeckUpgradeRangeScalar(deckFocusCard, deltaY);
     const rangeScalar = deckFocusCard.currentRangeScalar + rangeDelta;
@@ -676,6 +689,8 @@ const init = async () => {
     applyDeckCardTopScroll(deckFocusCard, rangeScalar);
   });
   cardScrollerEle.addEventListener("touchend", async (event) => {
+    if (document.body.getAttribute("showing") != "deck") return;
+
     if (!deckFocusCard) return;
     if (!deckFocusCard.isDragging) return;
 
@@ -687,10 +702,13 @@ const init = async () => {
     // animate it toward the closest scalar;
     const unsnappedTime = focusCard.unsnappedTime;
     const unsnappedRangeScalar = focusCard.unsnappedRangeScalar;
-    const targetRangeScalar = Math.min(upgradeCardEles.length, Math.max(0, Math.round(unsnappedRangeScalar + focusCard.momentumY * 5)));
+    const momentumScaled = focusCard.momentumY * 2;
+    const maxCardIndex = Math.ceil(unsnappedRangeScalar);
+    const minCardIndex = Math.floor(unsnappedRangeScalar);
+    const targetRangeScalar = Math.min(upgradeCardEles.length, maxCardIndex, Math.max(0, minCardIndex, Math.round(unsnappedRangeScalar + momentumScaled)));
 
     // animate to the card.
-    const animationDuration = 200;
+    const animationDuration = 300;
 
     do {
       if (unsnappedTime != focusCard.unsnappedTime) return;
@@ -731,6 +749,31 @@ const init = async () => {
 
   carouselEle.addEventListener("mousedown", onCarouselInteraction);
   carouselEle.addEventListener("mousemove", onCarouselInteraction);
+
+  deckTitleInput.addEventListener("input", event => {
+    deckTitleInputMirror.innerText = deckTitleInput.value || deckTitleInput.placeholder;
+  });
+
+  saveDeckEle.addEventListener("click", event => {
+    // show deckslots
+    
+    // on interaction save it
+  });
+
+  loadDeckEle.addEventListener("click", event => {
+    // show decklists
+
+    // on interaction load it
+  });
+
+  newDeckEle.addEventListener("click", event => {
+    // create new deck
+
+  });
+  
+  returnEle.addEventListener("click", event => {
+    overlayMenuEle.classList.add("hidden");
+  });
 };
 
 init();

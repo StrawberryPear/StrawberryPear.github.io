@@ -2,6 +2,29 @@
   font-family: tradeWinds;
   src: url('./assets/trade-winds.ttf');
 }
+@keyframes markboxFlash {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  55% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 0.3;
+  }
+  65% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 :root {
   --screen-width: 100%;
   --screen-height: 100%;
@@ -199,11 +222,16 @@ nav {
   z-index: 2;
 }
 call {
-  display: inline-block;
+  display: flex;
   position: relative;
-  margin-left: 12px;
+  margin-left: 4px;
   font-size: 20px;
   font-family: tradeWinds;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-content: center;
+  justify-content: flex-start;
+  align-items: center;
 }
 ham {
   position: relative;
@@ -284,12 +312,15 @@ cardControl::before {
   background-position: center;
   background-repeat: no-repeat;
   right: 4px;
+  background-size: auto 80%;'
 }
 cardControl.inactive {
 }
 
 cardControl.filterCharacter::before {
-  content: 'C';
+  content: '';
+  background-image: url('./assets/character.png');
+  background-size: auto 80%;
 }
 cardControl.filterAdvocate::before {
   content: 'G';
@@ -303,6 +334,7 @@ cardControl.filterNeutral::before {
 cardControl.filterTactic::before {
   content: '';
   background-image: url('./assets/tactic.png');
+  background-size: auto 90%;
 }
 cardControl.filterPotion::before {
   content: '';
@@ -312,20 +344,24 @@ cardControl.filterWeapon::before {
   content: '';
   background-image: url('./assets/weapon.png');
 }
-cardControl.filterItem::before {
+cardControl.filterItem::before, cardControl.filterUpgrade::before {
   content: '';
   background-image: url('./assets/item.png');
+  background-size: auto 80%;
 }
 cardControl.filterSpell::before {
   content: '';
   background-image: url('./assets/spell.png');
 }
 cardControl.filterRelic::before, cardControl.filterRelicUpgrade::before {
-  content: 'R';
+  content: '';
+  background-image: url('./assets/relic.png');
 }
 cardControl.filterShop::before {
-  font-size: 30px;
+  font-size: 26px;
   content: '$';
+  padding-top:3px;
+  padding-left:2px;
 }
 
 
@@ -488,7 +524,7 @@ overlayMenu, loadingOverlay {
   left:0px;
   width:100%;
   height: 100%;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.95);
   display: flex;
   flex-wrap: nowrap;
   flex-direction: column;
@@ -538,7 +574,20 @@ searchContainer input[type="text"] {
     font-size: inherit;
 }
 
-searchicon {position: absolute;display: block;top: 50%;left: 16px;width: 24px;height: 24px;transform: translate(-50%, -50%);background-image: url('./assets/search.png');background-size: contain;background-position: center;background-repeat: no-repeat;pointer-events: none;}
+searchIcon {
+  position: absolute;
+  display: block;
+  top: 50%;
+  left: 16px;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  background-image: url('./assets/search.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
 
 topButton {
     position: relative;
@@ -692,12 +741,16 @@ markBox {
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    background-image: url(./assets/marked.png);
+    animation: markboxFlash 12s infinite;
+    filter: grayscale(1);
 }
 markBox:first-child:last-child {
     width: 24px;
+    animation: none;
+    filter: none;
     height:24px;
     background-image: url('./assets/unmarked.png');
-  
 }
 markBox.marked:first-child:last-child {
     width: 24px;
@@ -706,7 +759,9 @@ markBox.marked:first-child:last-child {
   
 }
 markBox.marked {
-    background-image: url('./assets/marked.png');
+    opacity: 1;
+    animation: none;
+    filter: none;
 }
 
 card > card {
@@ -725,8 +780,11 @@ body[showing="deck"] cardButtons {
 
 body[showing="deck"] cardScrollerContainer {
   max-height: calc(var(--screen-height));
+  min-height: calc(var(--screen-height));
   padding-top: calc(var(--nav-height));
   top: calc(-1 * var(--nav-height));
+  /* padding-bottom: var(--nav-height); */
+  box-sizing: border-box;
 }
 
 cardlist.deck {
@@ -742,4 +800,42 @@ main {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
+}
+input#title {
+  overflow: hidden;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+  font-family: tradeWinds;
+  color: #fff;
+}
+deckTitleContainer {
+  position: relative;
+  display: inline-block;
+}
+deckTitleMirror {
+  opacity: 0;
+  pointer-events: none;
+  padding-right: 8px;
+}
+edit {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url('./assets/edit.png');
+  background-size: 19px;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+add {
+    margin-bottom: calc(var(--screen-height) * 0.1);
 }

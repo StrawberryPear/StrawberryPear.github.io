@@ -11,7 +11,7 @@
 
     <title>Relicblade Deck Builder</title>
 
-    <link rel="stylesheet" type="text/css" href="viewer.css?v=2">
+    <link rel="stylesheet" type="text/css" href="viewer.css?v=3">
 
     <script src="./pdf.js"></script>
     <script src="./umd.js"></script>
@@ -20,13 +20,13 @@
   <body class="loading" showing="deck" subfilter="">
     <main>
       <nav>
-        <call><span id="title">Deck Builder</span> <span id="points"></span></call>
+        <call><edit></edit><deckTitleContainer><input type="text" id="title" contentEditable="true" maxlength="24" placeholder="Untitled Deck"></input><deckTitleMirror id="titleMirror">Untitled Deck</deckTitleMirror></deckTitleContainer><span id="points"></span></call>
         <ham></ham>
       </nav>
 
       <cardTopControls class="library">
         <searchContainer>
-          <input type="text" />
+          <input type="text" placeholder="Search text" />
           <searchIcon type="view"></searchIcon>
           <searchIcon type="clear"></searchIcon>
         </searchContainer>
@@ -142,8 +142,18 @@
     </modalOverlay>
 
     <overlayMenu class="hidden">
+      <menuControl class="newDeck">Create New Deck</menuControl>
+
+      <br>
+      <menuControl class="saveDeck">Save Deck</menuControl>
+      <menuControl class="loadDeck">Load Deck</menuControl>
+      <br>
+
       <menuControl class="library removeLibraryCard">Remove Card From Library</menuControl>
       <label class="menuControl fileUpload">Add Cards from PDF<input id="fileUpload" type='file' /></label>
+      <br>
+      <br>
+      <menuControl class="return">Return</menuControl>
     </overlayMenu>
     <script src="./storeNew.js"></script>
     <script src="./load.js"></script>
