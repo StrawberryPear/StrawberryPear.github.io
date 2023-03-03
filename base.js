@@ -336,8 +336,22 @@ const init = async () => {
       const cardObjectStore = db.createObjectStore('cards', { keyPath: 'index', autoIncrement: true }); 
 
       cardObjectStore.createIndex('uid', 'uid', { unique: true });
+
     }});
 
+  await (async () => {
+    const baseTransaction = database.transaction('cards', 'readwrite');
+    const baseObjectStore = baseTransaction.objectStore('cards');
+
+    for (const baseCard of baseCards) {
+      try {
+        await baseObjectStore.add({uid: baseCard.uid, image: baseCard.image});
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  })();
+  
   const transaction = database.transaction('cards');
   const cardStore = transaction.objectStore('cards');
 

@@ -174,7 +174,9 @@ const applyFilters = () => {
 
     const hasCardsMatching = libraryCardEles
       .filter(ele => ele.tagName == "CARD")
-      .find(cardEle => (cardEle.getAttribute("uid") || "").toLowerCase().includes(uid));
+      .map(ele => ele.getAttribute("uid").toLowerCase())
+      .filter(cardUid => !baseCards.findIndex(baseCard => baseCard.uid.toLowerCase == cardUid))
+      .find(cardUid => (cardUid || "").includes(uid));
 
     purchaseEle.classList.toggle("bought", !!hasCardsMatching);
   }

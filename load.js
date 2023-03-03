@@ -123,7 +123,6 @@ const loadCardDataFromUrl = (() => {
 
     const pdf = await loadingTask.promise;
     const metaData = await pdf.getMetadata();
-    debugger;
 
     var totalPages = pdf.numPages
     var data = [];
