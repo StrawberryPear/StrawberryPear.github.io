@@ -687,16 +687,17 @@ const init = async () => {
     const touch = event.touches[0];
   
     deckFocusCard.touchStart = Date.now();
-    deckFocusCard.isDragging = false;
-  });
+    deckFocusCard.deckDragging = false;
+
+    return;
+  }, {passive: false});
   cardScrollerEle.addEventListener("touchmove", event => {
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
-
     if (!deckFocusCard) return;
     
     const touch = event.touches[0];
-    if (!deckFocusCard.isDragging) {
+    if (!deckFocusCard.deckDragging) {
         
       deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
       
@@ -706,7 +707,7 @@ const init = async () => {
       deckFocusCard.previousX = touch.pageX;
       deckFocusCard.previousY = touch.pageY;
 
-      deckFocusCard.isDragging = true;
+      deckFocusCard.deckDragging = true;
     }
 
     const currentX = touch.pageX;
@@ -720,8 +721,8 @@ const init = async () => {
 
     deckFocusCard.momentumY = deckFocusCard.momentumY * 0.8;
 
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      return false;
+    if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+      return;
     }
     if (event.cancelable) event.preventDefault();
     
@@ -731,12 +732,12 @@ const init = async () => {
     deckFocusCard.momentumY += (rangeDelta || 0);
 
     applyDeckCardTopScroll(deckFocusCard, rangeScalar);
-  });
+  }, {passive: false});
   cardScrollerEle.addEventListener("touchend", async (event) => {
     if (document.body.getAttribute("showing") != "deck") return;
 
     if (!deckFocusCard) return;
-    if (!deckFocusCard.isDragging) return;
+    if (!deckFocusCard.deckDragging) return;
 
     const focusCard = deckFocusCard;
 
