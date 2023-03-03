@@ -60,6 +60,9 @@ const loadCardDataFromUrl = (() => {
   const CARD_ROW_OFFSET = 10;
 
   return async (url) => {
+    var PDFJS = window['pdfjs-dist/build/pdf'];
+    PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
+    
     const cardImages = [];
 
     const loadingTask = PDFJS.getDocument(url);

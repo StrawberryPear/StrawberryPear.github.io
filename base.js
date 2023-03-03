@@ -8,10 +8,8 @@ const CARD_OFFSET_Y = Math.round(18.6666666667 * SCALE);
 
 const CARD_ROW_OFFSET = Math.round(6.66666666667 * SCALE);
 
-var PDFJS = window['pdfjs-dist/build/pdf'];
-PDFJS.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
-
 var database;
+var deckName = "";
 var deck = [];
 
 var libraryFocusCard;
@@ -41,9 +39,10 @@ const deckTitleInputMirror = document.querySelector("deckTitleMirror#titleMirror
 
 const removeLibraryCardEle = document.querySelector('menuControl.removeLibraryCard');
 const returnEle = document.querySelector('menuControl.return');
-const newDeckEle = document.querySelector('menuControl.removeLibraryCard');
-const saveDeckEle = document.querySelector('menuControl.removeLibraryCard');
-const loadDeckEle = document.querySelector('menuControl.removeLibraryCard');
+const saveReturnEle = document.querySelector('menuControl.saveReturn');
+const newDeckEle = document.querySelector('menuControl.newDeck');
+const saveDeckEle = document.querySelector('menuControl.saveDeck');
+const loadDeckEle = document.querySelector('menuControl.loadDeck');
 const overlayMenuEle = document.querySelector('overlayMenu');
 
 const awaitFrame = () => new Promise(resolve => {
@@ -276,6 +275,47 @@ const addUpgradeToCharacter = (upgradeUID, characterCardEle, deckCharacter, upda
   return cardCloneEle
 };
 
+const loadDeckFromLocal = () => {
+  // clear the deck.
+  [...cardDeckListEle.children].filter(ele => ele.tagName == "CARDDECKWRAPPER").forEach(ele => ele.remove());
+  
+  var localJsonDeck = [];
+  var localDeckName = "";
+  try {
+    localJsonDeck = JSON.parse(localStorage.getItem('deck') || '[]');
+    localDeckName = localStorage.getItem('deckName') || '';
+  } catch (e) { }
+
+  const libraryCards = [...cardLibraryListEle.children].map(ele => ({uid: ele.getAttribute("uid")}));
+
+  // inital deck production
+  deck = localJsonDeck.filter(v => v && libraryCards.find(card => card.uid == v.uid));
+  deckName = localDeckName ;
+
+  deckTitleInput.value = deckName;
+  deckTitleInputMirror.innerText = deckName || deckTitleInput.placeholder;
+
+  updateDeck();
+
+  for (const cardData of deck) {
+    addCharacterToDeck(cardData, false);
+  }
+
+  var localJsonDecks = {};
+
+  try {
+    localJsonDecks = JSON.parse(localStorage.getItem('decks') || '{}');
+  } catch (e) { }
+
+  // update the deckstore
+  [...document.querySelectorAll("menuControl.saveSlot")].forEach((saveSlotEle) => {
+    const saveSlotIdx = saveSlotEle.getAttribute("idx");
+    const localJsonDeckIdx = localJsonDecks[saveSlotIdx] || {deckName: "Empty Slot"};
+
+    saveSlotEle.innerText = `${saveSlotIdx}. ${localJsonDeckIdx.deckName}`;
+  });
+}
+
 // initialize the database.
 const init = async () => {
   const updateAppSize = () => {
@@ -343,18 +383,7 @@ const init = async () => {
     })
   });
 
-  var jsonDeck = [];
-  try {
-    jsonDeck = JSON.parse(localStorage.getItem('deck') || '[]');
-  } catch (e) { }
-
-  // inital deck production
-  deck = jsonDeck.filter(v => v && cards.find(card => card.uid == v.uid));
-  updateDeck();
-
-  for (const cardData of deck) {
-    addCharacterToDeck(cardData, false);
-  }
+  loadDeckFromLocal();
 
   Object.keys(filters)
     .forEach(key => {
@@ -616,6 +645,7 @@ const init = async () => {
 
   document.querySelector('ham').addEventListener('click', () => {
     overlayMenuEle.className = '';
+    overlayMenuEle.setAttribute("showing", "mainMenu");
   });
 
   gridButtonEle.addEventListener('click', () => {
@@ -752,23 +782,110 @@ const init = async () => {
 
   deckTitleInput.addEventListener("input", event => {
     deckTitleInputMirror.innerText = deckTitleInput.value || deckTitleInput.placeholder;
+    deckName = deckTitleInput.value;
+    localStorage.setItem("deckName", deckName);
+  });
+
+  const handleSave = (saveSlotIdx) => {
+    var localJsonDecks = {};
+  
+    try {
+      localJsonDecks = JSON.parse(localStorage.getItem('decks') || '{}');
+    } catch (e) { }
+
+    // check if a save is already up there
+    if (localJsonDecks[saveSlotIdx] && !confirm(`Are you sure you want to override ${localJsonDecks[saveSlotIdx].deckName || 'Untitled Deck'}?`)) {
+      return;
+    }
+    // save to that slot
+    localJsonDecks[saveSlotIdx] = {deck, deckName};
+
+    localStorage.setItem('decks', JSON.stringify(localJsonDecks));
+
+    loadDeckFromLocal();
+    // hide the menu
+    overlayMenuEle.classList.add("hidden");
+
+    showToast(`Deck, ${deckName} saved to slot ${saveSlotIdx}`);
+  };
+
+  const handleLoad = (loadSlotIdx) => {
+    var localJsonDecks = {};
+  
+    try {
+      localJsonDecks = JSON.parse(localStorage.getItem('decks') || '{}');
+    } catch (e) { }
+
+    // check if a save is already up there
+    if (!localJsonDecks[loadSlotIdx]) {
+      showToast(`Deck slot, ${loadSlotIdx} is empty`);
+      return;
+    }
+
+    if (deck.length) {
+      if (!confirm("If your current deck is unsaved, it will be lost. Are you sure you want to load a new deck?")) {
+        return;
+      }
+    }
+    // save to that slot
+    deck = localJsonDecks[loadSlotIdx].deck || {};
+    deckName = localJsonDecks[loadSlotIdx].deckName || "";
+
+    localStorage.setItem('deck', JSON.stringify(deck));
+    localStorage.setItem('deckName', deckName);
+
+    loadDeckFromLocal();
+    // hide the menu
+    overlayMenuEle.classList.add("hidden");
+
+    showToast(`Deck, ${deckName || "Untitled Deck"} loaded!`);
+  };
+
+  [...document.querySelectorAll("menuControl.saveSlot")].forEach((saveSlotEle) => {
+    // add event listeners to each to save 
+    saveSlotEle.addEventListener("click", (event) => {
+      const isSaveState = overlayMenuEle.getAttribute("saveMode") == "save";
+      const saveIdx = saveSlotEle.getAttribute("idx");
+
+      if (isSaveState) {
+        handleSave(saveIdx);
+      } else {
+        handleLoad(saveIdx);
+      }
+    });
+  });
+
+  saveReturnEle.addEventListener("click", event => {
+    // show deckslots
+    overlayMenuEle.setAttribute("showing", "mainMenu");
   });
 
   saveDeckEle.addEventListener("click", event => {
     // show deckslots
-    
-    // on interaction save it
+    overlayMenuEle.setAttribute("showing", "savesMenu");
+    overlayMenuEle.setAttribute("saveMode", "save");
   });
 
   loadDeckEle.addEventListener("click", event => {
     // show decklists
-
-    // on interaction load it
+    overlayMenuEle.setAttribute("showing", "savesMenu");
+    overlayMenuEle.setAttribute("saveMode", "load");
   });
 
   newDeckEle.addEventListener("click", event => {
     // create new deck
+    const value = confirm("If your current deck is unsaved, it will be lost. Are you sure you want to create a new deck?");
 
+    if (!value) {
+      return;
+    }
+
+    overlayMenuEle.classList.add("hidden");
+
+    localStorage.setItem("deck", "[]");
+    localStorage.setItem("deckName", "");
+
+    loadDeckFromLocal();
   });
   
   returnEle.addEventListener("click", event => {
