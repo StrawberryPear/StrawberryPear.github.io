@@ -2383,7 +2383,7 @@ const store = {
         "classes": "darkness bone wizard",
         "keywords": "poison range one damage ad",
         "types": "character",
-        "upgradeTypes": "tactic weapon item potion potion",
+        "upgradeTypes": "tactic spell spell potion item",
         "factions": "adversary",
         "markBoxes": [
             [
