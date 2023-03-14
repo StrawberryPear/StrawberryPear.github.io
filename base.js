@@ -96,9 +96,38 @@ const getCurrentCardEle = (canBePurchase) => {
   }
 };
 
-const showModal = ((contentEle) => {
+const modalOverlayEle = document.querySelector("modalOverlay");
+const modalOverlayTextEle = modalOverlayEle.querySelector("modalText");
+const modalOverlayReturnButtonEle = modalOverlayEle.querySelector("modalButton#modalReturn");
+const modalOverlayAcceptButtonEle = modalOverlayEle.querySelector("modalButton#modalAccept");
+const showConfirm = async (content) => {
+  // hide the background 
+  modalOverlayEle.classList.remove("hidden");
 
-})();
+  // change the text, return true if they hit true/false false. 
+  modalOverlayTextEle.innerHTML = content;
+
+  const returnValue = await new Promise((resolve, reject) => {
+    const onFinished = (event) => {
+      // remove the button binds.
+      // unbind the buttons.
+      const id = event.target.getAttribute("id");
+
+      modalOverlayAcceptButtonEle.removeEventListener("click", onFinished);
+      modalOverlayReturnButtonEle.removeEventListener("click", onFinished);
+
+      resolve(id == "modalAccept");
+    };
+  
+    modalOverlayAcceptButtonEle.addEventListener("click", onFinished);
+    modalOverlayReturnButtonEle.addEventListener("click", onFinished);
+  });
+
+  // hide the overlay
+  modalOverlayEle.classList.add("hidden");
+
+  return returnValue;
+};
 
 const showToast = (() => {
   var currentToastTimeout;
@@ -392,7 +421,7 @@ const init = async () => {
         reader.readAsDataURL(file)
       } catch (error) {
         console.error(error);
-        alert('Something failed... Sorry.')
+        showToast('Something failed... Sorry.')
       }
     })
   });
@@ -491,7 +520,7 @@ const init = async () => {
     showLibraryButton.click();
   });
 
-  removeFromDeckButton.addEventListener('click', () => {
+  removeFromDeckButton.addEventListener('click', async () => {
     const currentCardEle = getCurrentDeckCardEle();
 
     if (!currentCardEle) {
@@ -509,7 +538,7 @@ const init = async () => {
     const currentFocusSubIndex = currentCardEle.currentRangeScalar || 0;
 
     if (!currentFocusSubIndex) {
-      const confirmValue = confirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
+      const confirmValue = await showConfirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
       if (!confirmValue) return;
 
       deck.splice(currentCardIndex, 1);
@@ -636,7 +665,7 @@ const init = async () => {
       const currentCardEle = getCurrentCardEle();
       if (!currentCardEle) return;
       
-      const confirmValue = confirm('Are you sure you want to remove this card from your library?');
+      const confirmValue = await confirm('Are you sure you want to remove this card from your library?');
       if (!confirmValue) return;
   
       // remove it from the library.
@@ -687,16 +716,17 @@ const init = async () => {
     const touch = event.touches[0];
   
     deckFocusCard.touchStart = Date.now();
-    deckFocusCard.isDragging = false;
-  });
+    deckFocusCard.deckDragging = false;
+
+    return;
+  }, {passive: false});
   cardScrollerEle.addEventListener("touchmove", event => {
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
-
     if (!deckFocusCard) return;
     
     const touch = event.touches[0];
-    if (!deckFocusCard.isDragging) {
+    if (!deckFocusCard.deckDragging) {
         
       deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
       
@@ -706,7 +736,7 @@ const init = async () => {
       deckFocusCard.previousX = touch.pageX;
       deckFocusCard.previousY = touch.pageY;
 
-      deckFocusCard.isDragging = true;
+      deckFocusCard.deckDragging = true;
     }
 
     const currentX = touch.pageX;
@@ -720,8 +750,8 @@ const init = async () => {
 
     deckFocusCard.momentumY = deckFocusCard.momentumY * 0.8;
 
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      return false;
+    if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+      return;
     }
     if (event.cancelable) event.preventDefault();
     
@@ -731,12 +761,12 @@ const init = async () => {
     deckFocusCard.momentumY += (rangeDelta || 0);
 
     applyDeckCardTopScroll(deckFocusCard, rangeScalar);
-  });
+  }, {passive: false});
   cardScrollerEle.addEventListener("touchend", async (event) => {
     if (document.body.getAttribute("showing") != "deck") return;
 
     if (!deckFocusCard) return;
-    if (!deckFocusCard.isDragging) return;
+    if (!deckFocusCard.deckDragging) return;
 
     const focusCard = deckFocusCard;
 
@@ -800,7 +830,7 @@ const init = async () => {
     localStorage.setItem("deckName", deckName);
   });
 
-  const handleSave = (saveSlotIdx) => {
+  const handleSave = async (saveSlotIdx) => {
     var localJsonDecks = {};
   
     try {
@@ -808,8 +838,12 @@ const init = async () => {
     } catch (e) { }
 
     // check if a save is already up there
-    if (localJsonDecks[saveSlotIdx] && !confirm(`Are you sure you want to override ${localJsonDecks[saveSlotIdx].deckName || 'Untitled Deck'}?`)) {
-      return;
+    if (localJsonDecks[saveSlotIdx]) {
+      const confirmValue = await showConfirm(`Are you sure you want to override ${localJsonDecks[saveSlotIdx].deckName || 'Untitled Deck'}?`);
+
+      if (!confirmValue) {
+        return;
+      }
     }
     // save to that slot
     localJsonDecks[saveSlotIdx] = {deck, deckName};
@@ -823,7 +857,7 @@ const init = async () => {
     showToast(`Deck, ${deckName} saved to slot ${saveSlotIdx}`);
   };
 
-  const handleLoad = (loadSlotIdx) => {
+  const handleLoad = async (loadSlotIdx) => {
     var localJsonDecks = {};
   
     try {
@@ -837,7 +871,9 @@ const init = async () => {
     }
 
     if (deck.length) {
-      if (!confirm("If your current deck is unsaved, it will be lost. Are you sure you want to load a new deck?")) {
+      const confirmValue = await showConfirm("If your current deck is unsaved, it will be lost. Are you sure you want to load a new deck?");
+
+      if (!confirmValue) {
         return;
       }
     }
@@ -886,9 +922,9 @@ const init = async () => {
     overlayMenuEle.setAttribute("saveMode", "load");
   });
 
-  newDeckEle.addEventListener("click", event => {
+  newDeckEle.addEventListener("click", async (event) => {
     // create new deck
-    const value = confirm("If your current deck is unsaved, it will be lost. Are you sure you want to create a new deck?");
+    const value = await showConfirm("If your current deck is unsaved, it will be lost. Are you sure you want to create a new deck?");
 
     if (!value) {
       return;

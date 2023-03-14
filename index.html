@@ -48,7 +48,7 @@
           <cardList class="library">
             <import uid="Add Own">
               <label>Add Cards from PDF</label>
-              <label class="fileUpload"><input type='file' /></label>
+              <label class="fileUpload"><input type='file' accept=".pdf"/></label>
             </import>
             <purchase uid="Temple of Justice">
               <label>Purchase Cardset, $2.99</label>
@@ -133,11 +133,6 @@
       </loading>
     </loadingOverlay>
 
-    <modalOverlay>
-      <modal>
-      </modal>
-    </modalOverlay>
-
     <overlayMenu class="hidden" showing="mainMenu">
       <mainMenu>
         <menuControl class="newDeck">Create New Deck</menuControl>
@@ -148,7 +143,7 @@
         <br>
 
         <menuControl class="library removeLibraryCard">Remove Card From Library</menuControl>
-        <label class="menuControl fileUpload">Add Cards from PDF<input id="fileUpload" type='file' /></label>
+        <label class="menuControl fileUpload">Add Cards from PDF<input id="fileUpload" type='file' accept=".pdf" /></label>
         <br>
         <br>
         <menuControl class="return">Return</menuControl>
@@ -164,14 +159,28 @@
         <menuControl class="saveReturn">Back to Menu</menuControl>
       </savesMenu>
     </overlayMenu>
+
+    <modalOverlay class="hidden">
+      <modal>
+        <modalText></modalText>
+        <modalButtons>
+          <modalButton id="modalAccept">
+            Accept
+          </modalButton>
+          <modalButton id="modalReturn">
+            Return
+          </modalButton>
+        </modalButtons>
+      </modal>
+    </modalOverlay>
     
     <script src="./umd.js"></script>
-    <script src="./storeNew.js"></script>
-    <script src="./load.js"></script>
-    <script src="./filters.js"></script>
-    <script src="./carousel.js"></script>
-    <script src="./baseCards.js"></script>
-    <script src="./base.js"></script>
+    <script src="./storeNew.js?v=1"></script>
+    <script src="./load.js?v=1"></script>
+    <script src="./filters.js?v=1"></script>
+    <script src="./carousel.js?v=1"></script>
+    <script src="./baseCards.js?v=1"></script>
+    <script src="./base.js?v=1"></script>
     <script src="./pdf.js"></script>
   </body>
 </html>

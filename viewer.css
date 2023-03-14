@@ -381,7 +381,7 @@ cardButtons {
   background: linear-gradient(00deg, #000a, transparent);
 }
 
-cardButton {
+cardButton, modalButton {
   position: relative;
   display: flex;
   grid-column: 1;
@@ -522,7 +522,7 @@ loading {
   border-top-color: #fff;
   border-bottom-color: #fff1;
 }
-overlayMenu, loadingOverlay {
+overlayMenu, loadingOverlay, modalOverlay {
   position: fixed;
   background: rgba(0,0,0,0.95);
   top:0px;
@@ -538,11 +538,13 @@ loadingOverlay {
   pointer-events: all;
 }
 overlayMenu.hidden, 
+modalOverlay.hidden, 
 body:not(.loading) loadingOverlay {
   opacity: 0;
   pointer-events: none;
 }
-overlayMenu.hidden * {
+overlayMenu.hidden *,
+modalOverlay.hidden * {
   pointer-events: none !important;
 }
 label input {
@@ -873,3 +875,41 @@ savesMenu, mainMenu {
 body[displayType="grid"] cardlist.library import::after {
   font-size: 42px;
 }
+
+modaloverlay {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: flex-end;
+    align-items: center;
+    background: #0008;
+    padding-bottom: 10%;
+    box-sizing: border-box;
+}
+
+modaltext {font-family: 'tradeWinds';text-shadow: 2px 2px black;font-size: 16px;}
+
+modal {
+    width: 90%;
+    padding: 5%;
+    box-sizing: border-box;
+    background: #091e21ee;
+}
+
+modalbuttons {
+    text-align: right;
+}
+
+modalbuttons {
+  display: grid;
+  margin-top: 32px;
+}
+
+modalbutton#modalReturn {}
+
+modalbutton#modalReturn {
+    grid-column: 2;
+}
+
+modaltext {}
