@@ -183,6 +183,11 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
   // work out how many cards are there to stack
   const upgradeCardEles = [...containerCardEle.children].filter(ele => ele.tagName == "CARD");
 
+  if (upgradeCardEles.length == 0) {
+    containerCardEle.style.setProperty("transform", `translateY(0px)`);
+    return;
+  }
+
   const cardHeight = containerCardEle.clientHeight;
   const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * cardHeight;
   const containerOffsetY = Math.min(1, rangeScalar) * -cardHeight;
@@ -565,6 +570,7 @@ const init = async () => {
 
       upgradeCardEle.remove();
 
+      debugger;
       applyDeckCardTopScroll(currentCardEle, 0);
     }
     updateDeck();
