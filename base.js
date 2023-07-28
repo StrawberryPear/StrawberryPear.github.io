@@ -15,6 +15,8 @@ var deck = [];
 var libraryFocusCard;
 var deckFocusCard;
 
+var scrollLock = false;
+
 var attachCharacter;
 
 const cardScrollerEle = document.querySelector('cardScroller');
@@ -729,11 +731,26 @@ const init = async () => {
 
   var scrollTimeout;
   cardScrollerEle.addEventListener("scroll", event => {
+    console.log(`scrolling`);
     updateCarousel();
+
+    scrollLock = true;
+
     //TODO make the buttons update
+    
+  });
+  cardScrollerEle.addEventListener("scrollend", event => {
+    console.log(`scrollend`);
+
+    scrollLock = false;
   });
 
   cardScrollerEle.addEventListener("touchstart", event => {
+    if (scrollLock) {
+      event.preventDefault();
+      return;
+    }
+
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
 
@@ -748,6 +765,12 @@ const init = async () => {
     return;
   }, {passive: false});
   cardScrollerEle.addEventListener("touchmove", event => {
+    if (scrollLock) {
+      event.preventDefault();
+      return;
+    }
+    
+    console.log(`touchmove`);
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
     if (!deckFocusCard) return;
@@ -790,6 +813,11 @@ const init = async () => {
     applyDeckCardTopScroll(deckFocusCard, rangeScalar);
   }, {passive: false});
   cardScrollerEle.addEventListener("touchend", async (event) => {
+    if (scrollLock) {
+      event.preventDefault();
+      return;
+    }
+    
     if (document.body.getAttribute("showing") != "deck") return;
 
     if (!deckFocusCard) return;
@@ -849,9 +877,6 @@ const init = async () => {
 
   carouselEle.addEventListener("touchstart", onCarouselInteraction);
   carouselEle.addEventListener("touchmove", onCarouselInteraction);
-
-  carouselEle.addEventListener("mousedown", onCarouselInteraction);
-  carouselEle.addEventListener("mousemove", onCarouselInteraction);
 
   deckTitleInput.addEventListener("input", event => {
     deckTitleInputMirror.innerText = deckTitleInput.value || deckTitleInput.placeholder;
