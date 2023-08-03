@@ -814,6 +814,7 @@ const init = async () => {
   }, {passive: false});
   cardScrollerEle.addEventListener("touchend", async (event) => {
     if (scrollLock) {
+      scrollLock = false;
       event.preventDefault();
       return;
     }
