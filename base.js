@@ -15,8 +15,6 @@ var deck = [];
 var libraryFocusCard;
 var deckFocusCard;
 
-var scrollLock = false;
-
 var attachCharacter;
 
 const cardScrollerEle = document.querySelector('cardScroller');
@@ -734,23 +732,14 @@ const init = async () => {
     console.log(`scrolling`);
     updateCarousel();
 
-    scrollLock = true;
-
     //TODO make the buttons update
     
   });
   cardScrollerEle.addEventListener("scrollend", event => {
     console.log(`scrollend`);
-
-    scrollLock = false;
   });
 
   cardScrollerEle.addEventListener("touchstart", event => {
-    if (scrollLock) {
-      event.preventDefault();
-      return;
-    }
-
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
 
@@ -765,11 +754,6 @@ const init = async () => {
     return;
   }, {passive: false});
   cardScrollerEle.addEventListener("touchmove", event => {
-    if (scrollLock) {
-      event.preventDefault();
-      return;
-    }
-    
     console.log(`touchmove`);
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
@@ -779,7 +763,7 @@ const init = async () => {
     if (!deckFocusCard.deckDragging) {
         
       deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
-      
+    
       deckFocusCard.scrollY = 0;
       deckFocusCard.momentumY = 0;
 
@@ -804,7 +788,7 @@ const init = async () => {
       return;
     }
     if (event.cancelable) event.preventDefault();
-    
+
     const rangeDelta = getDeckUpgradeRangeScalar(deckFocusCard, deltaY);
     const rangeScalar = deckFocusCard.currentRangeScalar + rangeDelta;
     
@@ -812,13 +796,8 @@ const init = async () => {
 
     applyDeckCardTopScroll(deckFocusCard, rangeScalar);
   }, {passive: false});
+  
   cardScrollerEle.addEventListener("touchend", async (event) => {
-    if (scrollLock) {
-      scrollLock = false;
-      event.preventDefault();
-      return;
-    }
-    
     if (document.body.getAttribute("showing") != "deck") return;
 
     if (!deckFocusCard) return;
@@ -838,7 +817,7 @@ const init = async () => {
     const targetRangeScalar = Math.min(upgradeCardEles.length, maxCardIndex, Math.max(0, minCardIndex, Math.round(unsnappedRangeScalar + momentumScaled)));
 
     // animate to the card.
-    const animationDuration = 300;
+    const animationDuration = 125;
 
     do {
       if (unsnappedTime != focusCard.unsnappedTime) return;
