@@ -68,6 +68,8 @@ const scrollScroller = async (left) => {
 
   const startTime = Date.now();
 
+  applyCarousel();
+
   do {
     await awaitFrame();
   } while (Date.now() - startTime < 1600);
@@ -655,15 +657,14 @@ const init = async () => {
     switch (currentCardEle.tagName) {
       case "PURCHASE":
         try {
-          const status = await buyProduct(uid);
-
-          if (status) {
-            // install the cards.
-            await installProduct(uid);
-          }
+          // open a browser window.
+          window.open("https://relicblade.com", "_blank");
         } catch (error) {
           showToast(error.message);
         }
+        break;
+      case "IMPORT":
+        document.querySelector("#fileUpload").click();
         break;
     }
   });
@@ -693,7 +694,7 @@ const init = async () => {
       const currentCardEle = getCurrentCardEle();
       if (!currentCardEle) return;
       
-      const confirmValue = await confirm('Are you sure you want to remove this card from your library?');
+      const confirmValue = await showConfirm('Are you sure you want to remove this card from your library?');
       if (!confirmValue) return;
   
       // remove it from the library.
@@ -725,6 +726,13 @@ const init = async () => {
     document.body.setAttribute("displayType", currentDisplayType == 'grid' ? '' : 'grid');
 
     if (currentDisplayType != "grid") return;
+    applyCarousel();
+  });
+
+  cardScrollerEle.addEventListener("scroll", event => {
+    if (document.body.getAttribute("showing") != "library") return;
+    if (document.body.getAttribute("displayType") == "grid") return;
+
     applyCarousel();
   });
 
@@ -935,6 +943,10 @@ const init = async () => {
         handleLoad(saveIdx);
       }
     });
+  });
+
+  document.querySelector("#fileUpload").addEventListener("change", event => {
+    document.body.className = 'loading';
   });
 
   saveReturnEle.addEventListener("click", event => {
