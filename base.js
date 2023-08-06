@@ -8,6 +8,8 @@ const CARD_OFFSET_Y = Math.round(18.6666666667 * SCALE);
 
 const CARD_ROW_OFFSET = Math.round(6.66666666667 * SCALE);
 
+const CARD_SLIDE_DURATION = 300;
+
 var database;
 var deckName = "";
 var deck = [];
@@ -570,7 +572,6 @@ const init = async () => {
 
       upgradeCardEle.remove();
 
-      debugger;
       applyDeckCardTopScroll(currentCardEle, 0);
     }
     updateDeck();
@@ -727,22 +728,10 @@ const init = async () => {
     applyCarousel();
   });
 
-  var scrollTimeout;
-  cardScrollerEle.addEventListener("scroll", event => {
-    console.log(`scrolling`);
-    updateCarousel();
-
-    //TODO make the buttons update
-    
-  });
-  cardScrollerEle.addEventListener("scrollend", event => {
-    console.log(`scrollend`);
-  });
-
   cardScrollerEle.addEventListener("touchstart", event => {
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
-
+    
     setDeckFocusCard(getCurrentDeckCardEle());
     if (!deckFocusCard) return;
 
@@ -754,14 +743,13 @@ const init = async () => {
     return;
   }, {passive: false});
   cardScrollerEle.addEventListener("touchmove", event => {
-    console.log(`touchmove`);
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
     if (!deckFocusCard) return;
     
     const touch = event.touches[0];
+
     if (!deckFocusCard.deckDragging) {
-        
       deckFocusCard.currentRangeScalar = deckFocusCard.currentRangeScalar || 0;
     
       deckFocusCard.scrollY = 0;
@@ -769,6 +757,8 @@ const init = async () => {
 
       deckFocusCard.previousX = touch.pageX;
       deckFocusCard.previousY = touch.pageY;
+
+      deckFocusCard.hasVerticallity = false;
 
       deckFocusCard.deckDragging = true;
     }
@@ -789,6 +779,8 @@ const init = async () => {
     }
     if (event.cancelable) event.preventDefault();
 
+    deckFocusCard.hasVerticallity = true;
+
     const rangeDelta = getDeckUpgradeRangeScalar(deckFocusCard, deltaY);
     const rangeScalar = deckFocusCard.currentRangeScalar + rangeDelta;
     
@@ -807,6 +799,8 @@ const init = async () => {
 
     const upgradeCardEles = [...focusCard.children].filter(ele => ele.tagName == "CARD");
 
+    if (!focusCard.hasVerticallity) return;
+
     // do the flickkkkk
     // animate it toward the closest scalar;
     const unsnappedTime = focusCard.unsnappedTime;
@@ -814,10 +808,14 @@ const init = async () => {
     const momentumScaled = focusCard.momentumY * 2;
     const maxCardIndex = Math.ceil(unsnappedRangeScalar);
     const minCardIndex = Math.floor(unsnappedRangeScalar);
-    const targetRangeScalar = Math.min(upgradeCardEles.length, maxCardIndex, Math.max(0, minCardIndex, Math.round(unsnappedRangeScalar + momentumScaled)));
+    const targetRangeScalar = Math.max(0, Math.min(upgradeCardEles.length, maxCardIndex, Math.max(0, minCardIndex, Math.round(unsnappedRangeScalar + momentumScaled))));
 
     // animate to the card.
-    const animationDuration = 125;
+    const animationDuration = CARD_SLIDE_DURATION;
+
+    focusCard.targetRangeScalar = targetRangeScalar;
+
+    console.log(targetRangeScalar);
 
     do {
       if (unsnappedTime != focusCard.unsnappedTime) return;
