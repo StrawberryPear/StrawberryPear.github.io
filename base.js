@@ -669,11 +669,22 @@ const init = async () => {
     }
   });
 
-  searchInputEle.addEventListener('keyup', async () => {
+  searchInputEle.addEventListener('keyup', async event => {
+    if (event.keyCode === 13) {
+      event.preventDefault();
+      event.target.blur();
+    }
+
+    const libraryCardEles = [...cardLibraryListEle.children];
+    
+    console.log(libraryCardEles.length);
+
     searchText = searchInputEle.value;
 
     applyFilters();
     applyCarousel();
+
+    // try to maintain the scroll?
 
     cardTopControlsEle.classList.toggle('searched', !!searchText);
   });
