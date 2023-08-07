@@ -675,13 +675,30 @@ const init = async () => {
       event.target.blur();
     }
 
+    const currentFocusCard = getCurrentCardEle();
+
     const libraryCardEles = [...cardLibraryListEle.children];
-    
-    console.log(libraryCardEles.length);
+    const previousActiveLibraryCardEles = libraryCardEles.filter(e => !e.classList.contains('inactive'));
 
     searchText = searchInputEle.value;
 
     applyFilters();
+    
+    const currentActiveLibraryCardEles = libraryCardEles.filter(e => !e.classList.contains('inactive'));
+
+    if (currentActiveLibraryCardEles.length != previousActiveLibraryCardEles.length) {
+      // scroll to the current focus card
+      const currentFocusCardIndex = currentActiveLibraryCardEles.indexOf(currentFocusCard);
+
+      if (currentFocusCardIndex != -1) {
+        const currentFocusCardEle = currentActiveLibraryCardEles[currentFocusCardIndex];
+        const scrollLeft = currentFocusCardEle.offsetLeft;
+        scrollScroller(scrollLeft);
+      } else {
+        scrollScroller(0);
+      }
+    }
+
     applyCarousel();
 
     // try to maintain the scroll?
