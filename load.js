@@ -70,7 +70,7 @@ const loadCardDataFromUrl = (() => {
     const getCanvasDataURL = (() => {
       const saveCanvas = document.createElement('canvas');
 
-      return (originCanvas, x, y, w, h) => {
+      return async (originCanvas, x, y, w, h) => {
         saveCanvas.width = w;
         saveCanvas.height = h;
 
@@ -117,7 +117,7 @@ const loadCardDataFromUrl = (() => {
           return '';
         }
 
-        return saveCanvas.toDataURL();
+        return saveCanvas.toDataURL('image/jpeg', 0.94);
       }
     })();
 
@@ -143,16 +143,21 @@ const loadCardDataFromUrl = (() => {
       var renderContext = { canvasContext: context, viewport: viewport };
 
       const render = await page.render(renderContext).promise;
-
-      [...Array(CARD_PER_PAGE)].map((_, i) => {
+      
+      for (let i = 0; i < CARD_PER_PAGE; i++) {
         const r = Math.floor(i / CARD_COLS);
         const c = i % CARD_COLS;
 
         const x = CARD_OFFSET_X + CARD_WIDTH * c;
         const y = CARD_OFFSET_Y + CARD_HEIGHT * r + CARD_ROW_OFFSET * r;
 
-        cardImages.push(getCanvasDataURL(loadingCanvas, x, y, CARD_WIDTH, CARD_HEIGHT));
-      });
+        const imageUrl = await getCanvasDataURL(loadingCanvas, x, y, CARD_WIDTH, CARD_HEIGHT);
+
+        debugger;
+        await new Promise(resolve => window.requestAnimationFrame(resolve));
+
+        cardImages.push(imageUrl);
+      }
     }
 
     return [cardImages, metaData.info.Title];

@@ -24,7 +24,7 @@ const updateCarousel = () => {
   // black out the carousel
   context.clearRect(0, 0, carouselCanvasEle.width, carouselCanvasEle.height);
   
-  context.strokeStyle = `#000b`;
+  context.strokeStyle = `#2b8c9abb`;
   context.lineWidth = count > 50 ? 1 : 2;
 
   const linePaddin = 4;
@@ -43,8 +43,8 @@ const updateCarousel = () => {
   const viewX = drawOffsetX + viewWidth * scrollScalar - cardDrawWidth * 0.5 + intervalWidth * 0.5;
 
   // current scroll 
-  context.strokeStyle = `#102f34`;
-  context.fillStyle = "#000b";
+  context.strokeStyle = `#58d5e6`;
+  context.fillStyle = "#2b8c9abb";
   context.lineWidth = 2;
   context.beginPath();
   context.rect(viewX, 0, cardDrawWidth, carouselCanvasEle.height);

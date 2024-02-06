@@ -43,13 +43,32 @@
   --card-base-width: 269;
   --card-base-height: 367;
 
-  --card-width: min(0.875 * var(--screen-width), calc(0.875 * var(--screen-height) - 203px) * (var(--card-base-width) / var(--card-base-height)));
+  --card-width: min(var(--screen-width), calc(1.025 * var(--screen-height) - 297px) * (var(--card-base-width) / var(--card-base-height)));
   --card-height:
-    calc(var(--card-width) * (var(--card-base-height) / var(--card-base-width)) * 1.03);
+    calc(var(--card-width) * (var(--card-base-height) / var(--card-base-width)) * 1.025);
+    
+  --card-width-deck: min(1.025 * var(--screen-width), calc(1.025 * var(--screen-height) - 267px) * (var(--card-base-width) / var(--card-base-height)));
+  --card-height-deck:
+    calc(var(--card-width-deck) * (var(--card-base-height) / var(--card-base-width)) * 1.025);
+
   --offset-top:
     max(0px, 0.6 * var(--screen-height) - calc(var(--card-height)));
   --nav-height: 48px;
   --foot-height: 44px;
+}
+
+/* check if we're horizontal */
+@media (orientation: landscape) {
+  :root {
+    --card-width: calc(1.025 * var(--screen-height) - 127px) * (var(--card-base-width) / var(--card-base-height));
+    --card-height:
+      calc(var(--card-width) * (var(--card-base-height) / var(--card-base-width)) * 1.03);
+      
+    --card-width-deck: min(1.025 * var(--screen-width), calc(1.025 * var(--screen-height) - 237px) * (var(--card-base-width) / var(--card-base-height)));
+    --card-height-deck:
+      calc(var(--card-width-deck) * (var(--card-base-height) / var(--card-base-width)) * 1.03);
+  
+  }
 }
 
 html {
@@ -135,17 +154,20 @@ add {
 
 cardDeckWrapper {
   position: relative;
-  width: var(--card-width);
-  height: var(--card-height);
+  width: min(var(--card-width-deck), 100vw);
+  height: var(--card-height-deck);
   display: inline-block;
   border-radius: 3.8%;
   margin: 0 min(2vw, 20px);
   scroll-snap-align: center;
-  padding-bottom: 64px;
+  padding-bottom: 96px;
 }
 
 cardDeckWrapper card {
   scroll-snap-align: none;
+  width: var(--card-width-deck);
+  height: var(--card-height-deck);
+  left: calc((min(var(--card-width-deck), 100vw) - var(--card-width-deck)) / 2);
   margin: 0;
 }
 
@@ -391,7 +413,7 @@ cardButtons {
   justify-items: center;
   padding-bottom: calc(var(--screen-height) * 0.01);
   align-items: end;
-  background: linear-gradient(00deg, #000a, transparent);
+  background: linear-gradient(00deg, #1b6570, transparent);
 }
 
 cardButton,
@@ -400,9 +422,9 @@ modalButton {
   display: flex;
   grid-column: 1;
   grid-row: 1;
-  background: url(./assets/add-remove.png);
   height: min(64px, calc(0.085 * var(--screen-height)));
   width: calc(100% - 2vw);
+  background: url(./assets/add-remove.png);
   background-size: 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -410,11 +432,27 @@ modalButton {
   align-content: flex-end;
   justify-content: center;
   font-family: 'tradeWinds';
-  font-size: min(16px, calc(8px + 0.01 * var(--screen-height)));
+  font-size: min(24px, calc(10px + 0.01 * var(--screen-height)));
   align-items: center;
+  color: #091e21;
+  font-weight: 700;
+  line-height: 90%;
 }
 
-cardButton::before {}
+cardButton::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background: url(./assets/add-remove.png);
+  background-size: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: brightness(0.5);
+  z-index: -1;
+}
 
 cardButton.removeFromDeck::before {}
 
@@ -833,7 +871,7 @@ body[showing="deck"] cardScrollerContainer {
 }
 
 cardlist.deck {
-  padding-top: calc(var(--screen-height) * 0.175);
+  padding-top: calc(var(--screen-height) * 0.115);
 }
 
 cardcontrol:not(.inactive) {
@@ -973,3 +1011,12 @@ modalbutton#modalReturn {
 }
 
 modaltext {}
+
+body > canvas {
+    position: absolute;
+    top: 0px;
+    left:  0px;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+}

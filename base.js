@@ -1,7 +1,7 @@
-const SCALE = 1.5;
+const SCALE = 6;
 
-const CARD_WIDTH = Math.round(179.333333 * SCALE);
-const CARD_HEIGHT = Math.round(244.666667 * SCALE);
+const CARD_WIDTH = Math.round(180 * SCALE);
+const CARD_HEIGHT = Math.round(250 * SCALE);
 
 const CARD_OFFSET_X = Math.round(36.6666666667 * SCALE);
 const CARD_OFFSET_Y = Math.round(18.6666666667 * SCALE);
@@ -240,6 +240,7 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
 
   // create mark boxes...
   (cardStore.markBoxes || []).forEach(([boxX, boxY, marked]) => {
+
     const boxEle = document.createElement("markBox");
 
     cardCloneEle.append(boxEle);
@@ -652,7 +653,7 @@ const init = async () => {
     // cardStore.markBoxes = cardStore.markBoxes || [];
     // cardStore.markBoxes.push([markBoxX, markBoxY, 0]);
 
-    // console.log(`box marked: ${markBoxX} - ${markBoxY}`);
+    // console.log(`box marked: ${markBoxX}, ${markBoxY}`);
 
     switch (currentCardEle.tagName) {
       case "PURCHASE":
