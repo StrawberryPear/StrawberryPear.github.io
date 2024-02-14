@@ -47,7 +47,7 @@ const updateCarousel = () => {
   context.fillStyle = "#2b8c9abb";
   context.lineWidth = 2;
   context.beginPath();
-  context.rect(viewX, 0, cardDrawWidth, carouselCanvasEle.height);
+  context.rect(viewX, 0, cardDrawWidth, carouselCanvasEle.height - 2);
   context.fill();
   context.stroke();
 }

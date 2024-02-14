@@ -51,24 +51,13 @@
   --card-height-deck:
     calc(var(--card-width-deck) * (var(--card-base-height) / var(--card-base-width)) * 1.025);
 
+  --card-width-grid: calc(var(--screen-width) / 3);
+  --card-height-grid: calc((var(--screen-width) / 3) * (var(--card-base-height) / var(--card-base-width)));
+
   --offset-top:
     max(0px, 0.6 * var(--screen-height) - calc(var(--card-height)));
   --nav-height: 48px;
   --foot-height: 44px;
-}
-
-/* check if we're horizontal */
-@media (orientation: landscape) {
-  :root {
-    --card-width: calc(1.025 * var(--screen-height) - 127px) * (var(--card-base-width) / var(--card-base-height));
-    --card-height:
-      calc(var(--card-width) * (var(--card-base-height) / var(--card-base-width)) * 1.03);
-      
-    --card-width-deck: min(1.025 * var(--screen-width), calc(1.025 * var(--screen-height) - 237px) * (var(--card-base-width) / var(--card-base-height)));
-    --card-height-deck:
-      calc(var(--card-width-deck) * (var(--card-base-height) / var(--card-base-width)) * 1.03);
-  
-  }
 }
 
 html {
@@ -128,10 +117,10 @@ cardScroller::-webkit-scrollbar {
 cardList {
   display: inline-flex;
   height: 100%;
-  align-items: center;
   box-sizing: border-box;
   padding: 0 50%;
   scroll-snap-align: none;
+  align-items: center;
 }
 
 card,
@@ -397,13 +386,6 @@ cardControl.filterRelicUpgrade::before {
   background-image: url('./assets/relic.png');
 }
 
-cardControl.filterShop::before {
-  font-size: 26px;
-  content: '$';
-  padding-top: 3px;
-  padding-left: 2px;
-}
-
 cardButtons {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -413,7 +395,8 @@ cardButtons {
   justify-items: center;
   padding-bottom: calc(var(--screen-height) * 0.01);
   align-items: end;
-  background: linear-gradient(00deg, #1b6570, transparent);
+  /* background: linear-gradient(00deg, #1b6570, transparent); */
+  pointer-events: none;
 }
 
 cardButton,
@@ -437,21 +420,11 @@ modalButton {
   color: #091e21;
   font-weight: 700;
   line-height: 90%;
+  pointer-events: all;
 }
 
-cardButton::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 0px;
-  width: 100%;
-  height: 100%;
-  background: url(./assets/add-remove.png);
-  background-size: 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: brightness(0.5);
-  z-index: -1;
+cardButton {
+  filter: drop-shadow(2px 4px 6px black);
 }
 
 cardButton.removeFromDeck::before {}
@@ -459,6 +432,14 @@ cardButton.removeFromDeck::before {}
 cardButtons.searched cardButton.search,
 cardButtons:not(.searched) cardButton.clearSearch {
   display: none;
+}
+
+cardButton.grid {
+  grid-column: 2;
+  background-image: url(./assets/add-remove-flipped.png);
+}
+cardButton.grid::before {
+  background-image: url(./assets/add-remove-flipped.png);
 }
 
 cardButton.search {
@@ -575,8 +556,8 @@ loading {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 35vw;
-  height: 35vw;
+  width: min(35vw, 35vh);
+  height: min(35vw, 35vh);
 
   animation: loadingSpin 3s infinite linear;
   border-radius: 50%;
@@ -671,13 +652,29 @@ topButton {
   background: #0d2426;
 }
 
-topbutton.grid {
-  width: 46px;
+cardButton.grid::after, cardButton.search::after {
+  content:'';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 80%;
+  overflow: hidden;
   background-image: url('./assets/grid.png');
   background-position: center;
   background-repeat: no-repeat;
   background-size: auto 74%;
-  min-width: 56px;
+}
+cardButton.search::after {
+  background-image: url('./assets/search-button.png');
+}
+cardButton.searched::after {
+  background-image: url(./assets/search-button-cancel.png);
+}
+
+body[displayType="grid"] cardButton.grid::after {
+  background-image: url('./assets/single.png');
 }
 
 searchicon[type="clear"] {
@@ -703,32 +700,30 @@ body[displayType="grid"] cardlist.library {
   align-items: center;
   justify-items: center;
   align-content: center;
-  grid-template-rows: repeat(auto-fill, calc(var(--card-height) * 0.45 + var(--screen-height) * 0.01));
+  grid-template-rows: repeat(auto-fill, calc(var(--card-height-grid) + var(--screen-height) * 0.01));
   grid-auto-flow: column;
   box-sizing: border-box;
   position: relative;
-  padding-right: 0px;
 }
 
 body[displayType="grid"] cardlist.library::after {
   content: "";
-  width: calc(var(--screen-width) * 0.5);
+  width: var(--card-width-grid);
   margin-right: 0px;
-  height: 100%;
-  grid-row: span round(down, calc(var(--screen-height) - 56.69px - 30.5px - var(--nav-height)));
+  height: calc(var(--card-height-grid) * 3);
+  grid-row: 1 / 3;
 }
 
 body[displayType="grid"] cardlist.library card {
-  width: calc(var(--card-width) * 0.45);
-  height: calc(var(--card-height) * 0.45);
-  /* transform: scale(0.5); */
+  width: var(--card-width-grid);
+  height: var(--card-height-grid);
   margin: 0 min(1vw, 10px);
 }
 
 body[displayType="grid"] cardlist.library purchase,
 body[displayType="grid"] cardlist.library import {
-  width: calc(var(--card-width) * 0.5);
-  height: calc(var(--card-width) * 0.5);
+  width: var(--card-width-grid);
+  height: var(--card-width-grid);
 }
 
 body[displayType="grid"] cardlist.library purchase label,
@@ -776,10 +771,6 @@ body[showing="library"]:not([displayType="grid"]) cardcarousel {
   display: block;
 }
 
-body[displayType="grid"] topButton.grid {
-  background-image: url('./assets/single.png');
-}
-
 cardbutton.addUpgrade {
   grid-column: 3;
 }
@@ -814,8 +805,8 @@ body[displayType="grid"] cardbutton.addToDeck {
 
 markBox {
   position: absolute;
-  width: 32px;
-  height: 32px;
+  height: calc(var(--card-height-deck) * 0.065);
+  width: calc(var(--card-height-deck) * 0.065);
   transform: translate(-50%, -50%);
   background-size: contain;
   background-position: center;
@@ -826,16 +817,16 @@ markBox {
 }
 
 markBox:first-child:last-child {
-  width: 24px;
+  height: calc(var(--card-height-deck) * 0.065);
+  width: calc(var(--card-height-deck) * 0.065);
   animation: none;
   filter: none;
-  height: 24px;
   background-image: url('./assets/unmarked.png');
 }
 
 markBox.marked:first-child:last-child {
-  width: 24px;
-  height: 24px;
+  height: calc(var(--card-height-deck) * 0.065);
+  width: calc(var(--card-height-deck) * 0.065);
   background-image: url('./assets/marked.png'), url('./assets/unmarked.png');
 
 }
@@ -930,6 +921,8 @@ add {
   margin-bottom: calc(var(--screen-height) * 0.1);
   background: url('./assets/addCharacter.png');
   background-size: 110%;
+  width: var(--card-width-deck);
+  height: var(--card-width-deck);
 }
 
 add::after,
@@ -945,6 +938,7 @@ import::after {
   text-align: center;
   color: #fff;
   filter: drop-shadow(0px 0px 2px black) drop-shadow(-2px -1px 2px black) drop-shadow(2px 2px 2px black);
+  pointer-events: none;
 }
 
 overlayMenu:not([showing="mainMenu"]) mainMenu,
@@ -977,7 +971,7 @@ modaloverlay {
   align-content: center;
   justify-content: flex-end;
   align-items: center;
-  background: #0008;
+  background: linear-gradient(0deg, black, black 10%, transparent 60%);
   padding-bottom: 10%;
   box-sizing: border-box;
 }
@@ -1008,15 +1002,7 @@ modalbutton#modalReturn {}
 
 modalbutton#modalReturn {
   grid-column: 2;
+  background-image: url(./assets/add-remove-flipped.png);
 }
 
 modaltext {}
-
-body > canvas {
-    position: absolute;
-    top: 0px;
-    left:  0px;
-    width: 100vw;
-    height: 100vh;
-    z-index: 10000;
-}

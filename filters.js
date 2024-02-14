@@ -13,8 +13,6 @@ const filterRelicUpgradeEle = document.querySelector('cardControl.filterRelicUpg
 
 const filterRelicEle = document.querySelector('cardControl.filterRelic');
 
-const filterShopEle = document.querySelector('cardControl.filterShop');
-
 var searchText = '';
 var subFilter;
 var specifiedFilters;
@@ -78,11 +76,6 @@ const filters = {
     ele: filterRelicEle,
     filter: /relic/i,
     active: false
-  },
-  shop: {
-    ele: filterShopEle,
-    filter: /purchase/i,
-    active: false
   }
 };
 
@@ -102,6 +95,14 @@ const setSubFilter = (newFilter, newSpecifiedFilters) => {
   applyFilters();
 }
 
+const setSearchText = (newSearchText) => {
+  searchText = newSearchText;
+  applyFilters();
+}
+const getSearchText = () => {
+  return searchText;
+}
+
 const applyFilters = () => {
   const allFalse = !Object.values(filters).find(o => o.active);
 
@@ -112,7 +113,7 @@ const applyFilters = () => {
     const cardStore = cardsStore[uid];
 
     if (!cardStore) {
-      cardEle.classList.toggle('inactive', subFilter || !allFalse || !!searchText.trim());
+      cardEle.classList.toggle('inactive', subFilter || !allFalse || !!getSearchText().trim());
 
       continue;
     }
@@ -121,7 +122,7 @@ const applyFilters = () => {
       return o.active && cardStore.base.match(o.filter);
     });
 
-    const searchShow = cardStore.base.toLowerCase().includes(searchText.toLowerCase());
+    const searchShow = `${/[A-z ]*/.exec(uid)[0].toLowerCase()} ${cardStore.base.toLowerCase()}`.includes(getSearchText().toLowerCase());
 
     const subFilterShow = !subFilter || (() => {
       if (subFilter == 'upgrade') {  

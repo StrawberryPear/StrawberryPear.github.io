@@ -153,7 +153,6 @@ const loadCardDataFromUrl = (() => {
 
         const imageUrl = await getCanvasDataURL(loadingCanvas, x, y, CARD_WIDTH, CARD_HEIGHT);
 
-        debugger;
         await new Promise(resolve => window.requestAnimationFrame(resolve));
 
         cardImages.push(imageUrl);

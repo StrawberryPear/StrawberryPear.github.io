@@ -24,15 +24,16 @@ const cardLibraryListEle = document.querySelector('cardList.library');
 const cardDeckListEle = document.querySelector('cardList.deck');
 const cardTopControlsEle = document.querySelector('cardTopControls');
 
-const searchInputEle = document.querySelector('searchContainer input');
+const searchInputEles = document.querySelectorAll('searchContainer input');
 const searchInputClearEle = document.querySelector('searchContainer searchicon[type="clear"]');
-const gridButtonEle = document.querySelector('topButton.grid');
+const gridButtonEle = document.querySelector('.grid');
 
-const removeFromDeckButton = document.querySelector("cardButton.removeFromDeck");
+const removeFromDeckButtons = document.querySelectorAll("cardButton.removeFromDeck");
 const showLibraryButton = document.querySelector("cardButton.showLibrary");
-const addUpgradeButton = document.querySelector("cardButton.addUpgrade");
+const searchButton = document.querySelector("cardButton.search");
+const addUpgradeButtons = document.querySelectorAll("cardButton.addUpgrade");
 const showDeckButton = document.querySelector("cardButton.showDeck");
-const addToDeckButton = document.querySelector("cardButton.addToDeck");
+const addToDeckButtons = document.querySelectorAll("cardButton.addToDeck");
 const addCharacterButton = document.querySelector("add");
 const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
 
@@ -82,22 +83,42 @@ const setDeckFocusCard = (newDeckFocusCard) => {
   deckFocusCard = newDeckFocusCard;
 };
 
-const getCurrentDeckCardEle = () => {
-  const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5);
-  const cardWrapperEle = pointEles.find(ele => ["CARDDECKWRAPPER"].includes(ele.tagName));
-  if (!cardWrapperEle) return;
-  const cardEle = cardWrapperEle.querySelector("card");
+const getCardFromPoint = (x, y, canBePurchase) => {
+  const pointEles = document.elementsFromPoint(x, y);
+  const isLibrary = document.body.getAttribute("showing") == "library";
 
-  return cardEle;
-};
+  const cardEles = pointEles
+    // get the card that's in the right bucket, ie library when viewing library, deck when viewing deck
+    .filter(ele => ele.parentElement && ["CARD", "PURCHASE", "IMPORT"].includes(ele.tagName))
+    .map(ele => {
+      if (ele.parentElement.tagName == "CARD") {
+        return ele.parentElement;
+      }
+      return ele;
+    })
+    .filter(ele => {
+      const closestCardList = ele.closest("cardList");
 
-const getCurrentCardEle = (canBePurchase) => {
-  const pointEles = document.elementsFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5);
-  const cardEle = pointEles.find(ele => ["CARD", "PURCHASE", "IMPORT"].includes(ele.tagName));
+      if (!closestCardList) return false;
+
+      return closestCardList.isSameNode(cardLibraryListEle) == isLibrary;
+    });
+    const cardEle = cardEles[0];
 
   if (cardEle?.tagName == 'CARD' || (canBePurchase && ["PURCHASE", "IMPORT"].includes(cardEle?.tagName))) {
     return cardEle;
   }
+}
+
+const getPointerCardEle = (touch, canBePurchase) => {
+  const x = touch.pageX;
+  const y = touch.pageY;
+
+  return getCardFromPoint(x, y, canBePurchase);
+};
+
+const getCenterCardEle = (canBePurchase) => {
+  return getCardFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5, canBePurchase);
 };
 
 const modalOverlayEle = document.querySelector("modalOverlay");
@@ -132,7 +153,52 @@ const showConfirm = async (content) => {
 
   return returnValue;
 };
+const showInput = async (content) => {
+  // hide the background 
+  modalOverlayEle.classList.remove("hidden");
 
+  // change the text, return true if they hit true/false false. 
+  modalOverlayTextEle.innerHTML = content;
+
+  // attach events to the text input
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.id = "modalInput";
+
+  input.addEventListener("keyup", (event) => {
+    if (event.keyCode === 13) {
+      modalOverlayAcceptButtonEle.click();
+
+      return;
+    }
+  });
+
+  modalOverlayTextEle.append(input);
+
+  input.focus();
+
+  const returnValue = await new Promise((resolve, reject) => {
+    const onFinished = (event) => {
+      // remove the button binds.
+      // unbind the buttons.
+      const id = event.target.getAttribute("id");
+
+      modalOverlayAcceptButtonEle.removeEventListener("click", onFinished);
+      modalOverlayReturnButtonEle.removeEventListener("click", onFinished);
+
+      resolve(id == "modalAccept" && document.getElementById("modalInput").value);
+    };
+  
+    modalOverlayAcceptButtonEle.addEventListener("click", onFinished);
+    modalOverlayReturnButtonEle.addEventListener("click", onFinished);
+  });
+
+  // hide the overlay
+  modalOverlayEle.classList.add("hidden");
+
+  return returnValue;
+};
 const showToast = (() => {
   var currentToastTimeout;
 
@@ -155,6 +221,20 @@ const showToast = (() => {
     }, 4000);
   }
 })();
+
+const awaitScrollStop = async () => {
+  const startTime = Date.now();
+
+  var lastScrollLeft = cardScrollerEle.scrollLeft;
+
+  await awaitFrame();
+
+  while (lastScrollLeft != cardScrollerEle.scrollLeft) {
+    lastScrollLeft = cardScrollerEle.scrollLeft;
+    await awaitFrame();
+  }
+  return startTime - Date.now();
+};
 
 const getDeckUpgradeRangeScalar = (containerCardEle, _scrollY) => {
   const scrollY = _scrollY * -1.3;
@@ -192,11 +272,15 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
     return;
   }
 
-  const cardHeight = containerCardEle.clientHeight;
-  const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * cardHeight;
-  const containerOffsetY = Math.min(1, rangeScalar) * -cardHeight;
+  const defaultCardHeight = containerCardEle.clientHeight;
+  const defaultRangeCardOffsetY = (0.175 / upgradeCardEles.length) * defaultCardHeight;
+  const defaultContainerOffsetY = Math.min(1, rangeScalar) * -defaultCardHeight;
 
   for (const upgradeCardIndex in upgradeCardEles) {
+    const cardHeight = containerCardEle.clientHeight;
+    const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * cardHeight;
+    const containerOffsetY = Math.min(1, rangeScalar) * -cardHeight;
+
     const upgradeCardEle = upgradeCardEles[upgradeCardIndex];
 
     const offsetCardOffsetY = rangeCardOffsetY * (parseInt(upgradeCardIndex) + 1);
@@ -214,9 +298,9 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
   }
 
   // slowly move the container down
-  const range = rangeCardOffsetY * rangeScalar * 0.5;
+  const range = defaultRangeCardOffsetY * rangeScalar * 0.5;
 
-  containerCardEle.style.setProperty("transform", `translateY(${-containerOffsetY + range}px)`);
+  containerCardEle.style.setProperty("transform", `translateY(${-defaultContainerOffsetY + range}px)`);
   // find the snap point stuff
 }
 
@@ -270,6 +354,43 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
   return cardCloneEle;
 };
 
+const getUpgradeType = (upgrade) => /(tactic|item|potion|spell|weapon)/.exec(cardsStore[upgrade.uid].types)[0];
+const canCharacterEquipUpgrade = (attachCharacter, upgradeUid) => {
+  // assume that it can take the upgrade, due to the filter.
+  const upgradeBean = cardsStore[upgradeUid];
+  if (!upgradeBean) return false;
+
+  const characterBean = cardsStore[attachCharacter.uid];
+  if (!characterBean) return false;
+
+  const upgradeType = getUpgradeType(upgradeBean);
+  if (!upgradeType) return true;
+  
+  const acceptableUpgradeTypes = characterBean.upgradeTypes
+    .split(" ")
+    .map(s => s.trim())
+    .reduce((acc, type) => {
+      acc[type] = acc[type] ? acc[type] + 1 : 1;
+
+      return acc;
+    }, {})
+
+  // check the number of upgrades of that type, the character already has
+  const currentCharacterUpgradeTypes = [...(attachCharacter.upgrades || []), upgradeBean]
+    .map(getUpgradeType)
+    .filter(v => v == upgradeType);
+
+  for (const currentCharacterUpgradeType of currentCharacterUpgradeTypes) {
+    if (acceptableUpgradeTypes[currentCharacterUpgradeType] === undefined) continue;
+
+    acceptableUpgradeTypes[currentCharacterUpgradeType]--;
+
+    if (acceptableUpgradeTypes[currentCharacterUpgradeType] < 0) return false;
+  }
+
+  return true;
+};
+
 const addUpgradeToCharacter = (upgradeUID, characterCardEle, deckCharacter, updateDeckStore = true) => {
   if (!upgradeUID) return;
 
@@ -312,6 +433,36 @@ const addUpgradeToCharacter = (upgradeUID, characterCardEle, deckCharacter, upda
   }
 
   return cardCloneEle
+};
+
+const performSearchForString = (newSearchText) => {
+  const currentFocusCard = getCenterCardEle();
+
+  const libraryCardEles = [...cardLibraryListEle.children];
+  const previousActiveLibraryCardEles = libraryCardEles.filter(e => !e.classList.contains('inactive'));
+
+  setSearchText(newSearchText);
+  
+  const currentActiveLibraryCardEles = libraryCardEles.filter(e => !e.classList.contains('inactive'));
+
+  if (currentActiveLibraryCardEles.length != previousActiveLibraryCardEles.length) {
+    // scroll to the current focus card
+    const currentFocusCardIndex = currentActiveLibraryCardEles.indexOf(currentFocusCard);
+
+    if (currentFocusCardIndex != -1) {
+      const currentFocusCardEle = currentActiveLibraryCardEles[currentFocusCardIndex];
+      const scrollLeft = currentFocusCardEle.offsetLeft;
+      scrollScroller(scrollLeft);
+    } else {
+      scrollScroller(0);
+    }
+  }
+
+  applyCarousel();
+
+  // try to maintain the scroll?
+
+  cardTopControlsEle.classList.toggle('searched', !!getSearchText());
 };
 
 const loadDeckFromLocal = () => {
@@ -357,6 +508,9 @@ const loadDeckFromLocal = () => {
 
 // initialize the database.
 const init = async () => {
+  // constantly measure the scrolling
+
+
   const updateAppSize = () => {
     const doc = document.documentElement;
     doc.style.setProperty('--screen-height', `${window.innerHeight}px`);
@@ -418,18 +572,15 @@ const init = async () => {
   applyCarousel();
   document.body.className = '';
 
-  [...document.querySelectorAll('label.fileUpload')].map(ele => ele.addEventListener('click', event => {
-    overlayMenuEle.className = 'hidden';
-  }));
-
-  [...document.querySelectorAll('input[type="file"]')].map(ele => {
-    ele.addEventListener('change', (event) => {
+  [...document.querySelectorAll('label.fileUpload')].map((ele) => {
+    ele.addEventListener('click', async (event) => {
       document.body.className = 'loading';
+      overlayMenuEle.className = 'hidden';
+
+      // accept a pdf
       try {
-        let [file] = event.target.files;
-        if (!file) {
-          document.body.className = '';
-        };
+        const [fileHandle] = await window.showOpenFilePicker({types: [{accept: {'application/pdf': ['.pdf']}}]});
+        const file = await fileHandle.getFile();
 
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -443,11 +594,11 @@ const init = async () => {
           }
         }
         reader.readAsDataURL(file)
-      } catch (error) {
-        console.error(error);
-        showToast('Something failed... Sorry.')
+      } catch (err) {
+        console.log(err);
+        document.body.className = '';
       }
-    })
+    });
   });
 
   loadDeckFromLocal();
@@ -476,65 +627,81 @@ const init = async () => {
     document.body.className = '';
 
     if (document.body.getAttribute("showing") !== 'deck') return;
-    setDeckFocusCard(getCurrentDeckCardEle());
+    const centerCardEle = getCenterCardEle();
+    console.log(`Save deck card - ${centerCardEle.getAttribute("uid")}`);
+    setDeckFocusCard(centerCardEle);
     // get the top level element
 
     // scroll to the last library focused' card
     document.body.setAttribute("showing", "library");
 
     applyCarousel();
+    
+    await awaitScrollStop();
 
-    const time = Date.now();
-    while (Date.now() - time < 600) {
-      await awaitFrame();
+    const screenWidthOffset = window.innerWidth * 0.5;
+    const cardScrollX = (libraryFocusCard?.offsetLeft || 0) - screenWidthOffset;
 
-      const cardScrollX = libraryFocusCard?.offsetLeft || 0;
-      // cardScrollerEle.scrollTo({left: cardScrollX, top: 0, behavior: 'instant'});
-      scrollScroller(cardScrollX);
+    scrollScroller(cardScrollX);
+  });
+  searchButton.addEventListener('click', async () => {
+    // check if we're already searching
+    if (document.body.getAttribute("showing") !== 'library') return;
+
+    const hasSearched = cardTopControlsEle.classList.contains('searched');
+    if (hasSearched) {
+      searchButton.classList.remove("searched");
+
+      performSearchForString("");
+      return;
     }
+    
+    const searchValue = await showInput("Search for a card");
+    performSearchForString(searchValue || "");
+
+    if (!searchValue) return;
+    searchButton.classList.add("searched");
   });
   showDeckButton.addEventListener('click', async () => {
     if (document.body.getAttribute("showing") !== 'library') return;
 
     setSubFilter();
 
-    const currentCard = getCurrentCardEle(true);
+    const currentCard = getCenterCardEle(true);
     libraryFocusCard = currentCard;
 
     // scroll to the last library focused' card
     document.body.setAttribute("showing", "deck");
 
-    const time = Date.now();
-    while (Date.now() - time < 600) {
-      await awaitFrame();
+    await awaitScrollStop();
 
-      const cardScrollX = deckFocusCard?.parentElement.offsetLeft || 0;
-      scrollScroller(cardScrollX);
-      // cardScrollerEle.scrollTo({left: cardScrollX, top: 0, behavior: 'instant'});
-    }
+    const screenWidthOffset = window.innerWidth * 0.5;
+    const cardScrollX = (deckFocusCard?.parentElement.offsetLeft || 0) - screenWidthOffset;
+    scrollScroller(cardScrollX);
   });
-  addUpgradeButton.addEventListener('click', () => {
-    if (document.body.getAttribute("showing") !== 'deck') return;
-
-    const deckCurrentCardEle = getCurrentDeckCardEle();
-    if (!deckCurrentCardEle) {
-      showToast("Can't attach upgrade to that");
-      return;
-    }
-
-    const uid = deckCurrentCardEle.getAttribute("uid");
-    const cardStore = cardsStore[uid];
-    if (!cardStore) return;
-
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(deckCurrentCardEle.parentElement);
-
-    // TODO: get what upgrades the character can use
-    setSubFilter('upgrade', { classes: cardStore.classes, upgradeType: cardStore.upgradeTypes});
-
-    setDeckFocusCard(deckCurrentCardEle);
-    attachCharacter = deck[currentCardIndex];
-
-    showLibraryButton.click();
+  addUpgradeButtons.forEach(addUpgradeButton => {
+    addUpgradeButton.addEventListener('click', () => {
+      if (document.body.getAttribute("showing") !== 'deck') return;
+  
+      const deckCurrentCardEle = getCenterCardEle();
+      if (!deckCurrentCardEle) {
+        showToast("Can't attach upgrade to that");
+        return;
+      }
+  
+      const uid = deckCurrentCardEle.getAttribute("uid");
+      const cardStore = cardsStore[uid];
+      if (!cardStore) return;
+  
+      const currentCardIndex = [...cardDeckListEle.children].indexOf(deckCurrentCardEle.parentElement);
+  
+      setSubFilter('upgrade', { classes: cardStore.classes, upgradeType: cardStore.upgradeTypes});
+  
+      setDeckFocusCard(deckCurrentCardEle);
+      attachCharacter = deck[currentCardIndex];
+  
+      showLibraryButton.click();
+    });
   });
   addCharacterButton.addEventListener('click', () => {
     if (document.body.getAttribute("showing") !== 'deck') return;
@@ -544,65 +711,79 @@ const init = async () => {
     showLibraryButton.click();
   });
 
-  removeFromDeckButton.addEventListener('click', async () => {
-    const currentCardEle = getCurrentDeckCardEle();
+  removeFromDeckButtons.forEach(removeForDeckButton => {
+    removeForDeckButton.addEventListener('click', async () => {
+      const currentCardEle = getCenterCardEle();
 
-    if (!currentCardEle) {
-      showToast('Can\'t remove that');
-      return;
-    }
+      if (!currentCardEle) {
+        showToast('Can\'t remove that');
+        return;
+      }
 
-    const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle.parentElement);
+      const currentCardIndex = [...cardDeckListEle.children].indexOf(currentCardEle.parentElement);
 
-    if (currentCardIndex == -1) {
-      showToast('Can\'t remove that');
-      return;
-    };
+      if (currentCardIndex == -1) {
+        showToast('Can\'t remove that');
+        return;
+      };
 
-    const currentFocusSubIndex = currentCardEle.currentRangeScalar || 0;
+      const currentFocusSubIndex = currentCardEle.currentRangeScalar || 0;
 
-    if (!currentFocusSubIndex) {
-      const confirmValue = await showConfirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
-      if (!confirmValue) return;
+      if (!currentFocusSubIndex) {
+        const confirmValue = await showConfirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
+        if (!confirmValue) return;
 
-      deck.splice(currentCardIndex, 1);
-      currentCardEle.parentElement.remove();
-    } else {
-      const upgradeIndex = currentFocusSubIndex - 1;
+        deck.splice(currentCardIndex, 1);
+        currentCardEle.parentElement.remove();
+      } else {
+        const upgradeIndex = currentFocusSubIndex - 1;
 
-      deck[currentCardIndex].upgrades.splice(upgradeIndex, 1);
-      const upgradeCardEle = [...currentCardEle.querySelectorAll("card")][upgradeIndex];
+        deck[currentCardIndex].upgrades.splice(upgradeIndex, 1);
+        const upgradeCardEle = [...currentCardEle.querySelectorAll("card")][upgradeIndex];
 
-      upgradeCardEle.remove();
+        upgradeCardEle.remove();
 
-      applyDeckCardTopScroll(currentCardEle, 0);
-    }
-    updateDeck();
+        applyDeckCardTopScroll(currentCardEle, 0);
+      }
+      updateDeck();
 
-    showToast(`Card removed from deck`);
+      showToast(`Card removed from deck`);
+    }); 
   });
-  addToDeckButton.addEventListener('click', () => {
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
-
-    const uid = currentCardEle.getAttribute("uid");
-
-    const cardEleClone = addCharacterToDeck({uid});
-    if (!cardEleClone) return;
-
-    updateDeck();
-    setDeckFocusCard(cardEleClone);
-    showToast(`Card added to deck`);
-    showDeckButton.click();
+  addToDeckButtons.forEach(addToDeckButton => {
+    addToDeckButton.addEventListener('click', () => {
+      const currentCardEle = getCenterCardEle();
+      if (!currentCardEle) return;
+  
+      const uid = currentCardEle.getAttribute("uid");
+  
+      const cardEleClone = addCharacterToDeck({uid});
+      if (!cardEleClone) return;
+  
+      updateDeck();
+      setDeckFocusCard(cardEleClone);
+      showToast(`Card added to deck`);
+      showDeckButton.click();
+    });
   });
-  attachUpgradeButton.addEventListener('click', (e) => {
+  attachUpgradeButton.addEventListener('click', async (e) => {
     if (!attachCharacter) return;
 
-    const currentCardEle = getCurrentCardEle();
+    const currentCardEle = getCenterCardEle();
     if (!currentCardEle) return;
 
     const uid = currentCardEle.getAttribute("uid");
     if (!uid) return;
+
+    // check if the character can use the card
+    const isAcceptable = canCharacterEquipUpgrade(attachCharacter, uid);
+    
+    if (!isAcceptable) {
+      // prompt the user saying the character can't ususally use this
+      const upgradeType = getUpgradeType(cardsStore[uid]);
+      const confirmValue = await showConfirm(`This character already has too many, ${upgradeType}s. Do you want to still add this?`);
+      if (!confirmValue) return;
+    }
 
     const cardEleClone = addUpgradeToCharacter(uid, deckFocusCard, attachCharacter, true);
 
@@ -612,107 +793,22 @@ const init = async () => {
     showToast(`Upgrade Attached`);
     showDeckButton.click();
   });
-  cardScrollerEle.addEventListener('click', async (e) => {
-    // get the card that was clicked
-    const cardEle = e.target;
 
-    if (!["CARD", "PURCHASE", "IMPORT"].includes(cardEle.tagName)) {
-      // not a valid type;
-      return;
-    }
-
-    if (document.body.getAttribute("displayType") == "grid") {
-      // target the new card and swap display type
-      document.body.setAttribute("displayType", "");
-
-      applyCarousel();
-
-      const scrollLeft = cardEle.offsetLeft;
-      scrollScroller(scrollLeft);
-      // cardScrollerEle.scrollTo({left: scrollLeft, top: 0, behavior: 'instant'});
-
-      return;
-    }
-
-    // if it's a grid, convert it to a non-grid with that card in view
-    
-    const currentCardEle = getCurrentCardEle(true);
-    if (!currentCardEle) return;
-    
-    const uid = currentCardEle.getAttribute("uid");
-    const cardStore = cardsStore[uid];
-    if (!cardStore) return;
-
-    // get the xy of where was clicked
-    // get card bounds
-    // const cardBounds = currentCardEle.getBoundingClientRect();
-
-    // const markBoxX = (e.clientX - cardBounds.left) / cardBounds.width;
-    // const markBoxY = (e.clientY - cardBounds.top) / cardBounds.height;
-
-    // cardStore.markBoxes = cardStore.markBoxes || [];
-    // cardStore.markBoxes.push([markBoxX, markBoxY, 0]);
-
-    // console.log(`box marked: ${markBoxX}, ${markBoxY}`);
-
-    switch (currentCardEle.tagName) {
-      case "PURCHASE":
-        try {
-          // open a browser window.
-          window.open("https://relicblade.com", "_blank");
-        } catch (error) {
-          showToast(error.message);
-        }
-        break;
-      case "IMPORT":
-        document.querySelector("#fileUpload").click();
-        break;
-    }
-  });
-
-  searchInputEle.addEventListener('keyup', async event => {
+  searchInputEles.forEach(searchInputEle => searchInputEle.addEventListener('keyup', async event => {
     if (event.keyCode === 13) {
       event.preventDefault();
       event.target.blur();
     }
 
-    const currentFocusCard = getCurrentCardEle();
-
-    const libraryCardEles = [...cardLibraryListEle.children];
-    const previousActiveLibraryCardEles = libraryCardEles.filter(e => !e.classList.contains('inactive'));
-
-    searchText = searchInputEle.value;
-
-    applyFilters();
-    
-    const currentActiveLibraryCardEles = libraryCardEles.filter(e => !e.classList.contains('inactive'));
-
-    if (currentActiveLibraryCardEles.length != previousActiveLibraryCardEles.length) {
-      // scroll to the current focus card
-      const currentFocusCardIndex = currentActiveLibraryCardEles.indexOf(currentFocusCard);
-
-      if (currentFocusCardIndex != -1) {
-        const currentFocusCardEle = currentActiveLibraryCardEles[currentFocusCardIndex];
-        const scrollLeft = currentFocusCardEle.offsetLeft;
-        scrollScroller(scrollLeft);
-      } else {
-        scrollScroller(0);
-      }
-    }
-
-    applyCarousel();
-
-    // try to maintain the scroll?
-
-    cardTopControlsEle.classList.toggle('searched', !!searchText);
-  });
+    performSearchForString(searchInputEle.value);
+  }));
   searchInputClearEle.addEventListener("click", () => {
-    searchText = "";
-    searchInputEle.value = "";
+    searchInputEles.forEach(searchInputEle => searchInputEle.value = "");
 
-    applyFilters();
+    setSearchText("");
+
     applyCarousel();
-    cardTopControlsEle.classList.toggle('searched', !!searchText);
+    cardTopControlsEle.classList.toggle('searched', !!getSearchText());
   })
 
   removeLibraryCardEle.addEventListener('click', async (event) => {
@@ -720,7 +816,7 @@ const init = async () => {
     if (event.cancelable) event.preventDefault();
 
     setTimeout(async () => {
-      const currentCardEle = getCurrentCardEle();
+      const currentCardEle = getCenterCardEle();
       if (!currentCardEle) return;
       
       const confirmValue = await showConfirm('Are you sure you want to remove this card from your library?');
@@ -769,10 +865,10 @@ const init = async () => {
     // check if we're in the deck
     if (document.body.getAttribute("showing") != "deck") return;
     
-    setDeckFocusCard(getCurrentDeckCardEle());
-    if (!deckFocusCard) return;
-
     const touch = event.touches[0];
+
+    setDeckFocusCard(getPointerCardEle(touch));
+    if (!deckFocusCard) return;
   
     deckFocusCard.touchStart = Date.now();
     deckFocusCard.deckDragging = false;
@@ -870,13 +966,95 @@ const init = async () => {
     } while (delta < 1);
   });
 
-  cardScrollerEle.addEventListener("click", event => {
-    const currentCardEle = getCurrentCardEle();
-    if (!currentCardEle) return;
+  cardScrollerEle.addEventListener("click", async (event) => {
+    const clickedCardEle = event?.target;
+    if (!clickedCardEle) return;
+    if (clickedCardEle.tagName != "CARD") return;
+  
+    if (document.body.getAttribute("showing") !== 'library') {
+      // do events for horizontal view.
+      return;
+    }
 
-    // scroll to focus the clicked card, both in the x and "y" coordinates
+    if (document.body.getAttribute("displayType") !== "grid") {
+      const centerCard = getCenterCardEle();
+  
+      if (centerCard.getAttribute("index") !== clickedCardEle.getAttribute("index")) {
+        // scroll to focus the clicked card, both in the x and "y" coordinates
+  
+        // work out the centre of the screen
+        const cardWidth = clickedCardEle.clientWidth;
+        const cardsPerScreen = Math.floor(window.innerWidth / cardWidth);
+  
+        const offsetCenterLeft = cardsPerScreen * 0.5 * cardWidth;
+        
+        // check if we're in the center already
+        
+        const timeToStop = await awaitScrollStop();
+  
+        if (timeToStop < 50) {
+          const cardScrollX = clickedCardEle.offsetLeft || 0;
+          scrollScroller(cardScrollX - offsetCenterLeft);
+        }
+        
+        return;
+      }
+
+      // do the weird cards
+      
+      switch (clickedCardEle.tagName) {
+        case "PURCHASE":
+          try {
+            // open a browser window.
+            window.open("https://relicblade.com", "_blank");
+          } catch (error) {
+            showToast(error.message);
+          }
+          return;
+        case "IMPORT":
+          document.querySelector("#fileUpload").click();
+          return;
+      }
+
+      // do the cool cards.
+    }
+  
+    if (document.body.getAttribute("displayType") == "grid") {
+      // target the new card and swap display type
+      document.body.setAttribute("displayType", "");
+  
+      applyCarousel();
+  
+      const timeToStop = await awaitScrollStop();
+      
+      // work out the centre of the screen
+      const cardWidth = clickedCardEle.clientWidth;
+      const cardsPerScreen = Math.floor(window.innerWidth / cardWidth);
+
+      const offsetCenterLeft = cardsPerScreen * 0.5 * cardWidth;
+
+      const cardScrollX = clickedCardEle.offsetLeft || 0;
+      scrollScroller(cardScrollX - offsetCenterLeft);
+  
+      return;
+    }
+  
+    if (document.body.getAttribute("displayType") != "deck") return;
+  
     
-  })
+    
+    // get the xy of where was clicked
+    // get card bounds
+    // const cardBounds = currentCardEle.getBoundingClientRect();
+  
+    // const markBoxX = (e.clientX - cardBounds.left) / cardBounds.width;
+    // const markBoxY = (e.clientY - cardBounds.top) / cardBounds.height;
+  
+    // cardStore.markBoxes = cardStore.markBoxes || [];
+    // cardStore.markBoxes.push([markBoxX, markBoxY, 0]);
+  
+    // console.log(`box marked: ${markBoxX}, ${markBoxY}`);
+  });
 
   const onCarouselInteraction = event => {
     if (!event.touches) return;
@@ -972,10 +1150,6 @@ const init = async () => {
         handleLoad(saveIdx);
       }
     });
-  });
-
-  document.querySelector("#fileUpload").addEventListener("change", event => {
-    document.body.className = 'loading';
   });
 
   saveReturnEle.addEventListener("click", event => {
