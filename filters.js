@@ -168,20 +168,4 @@ const applyFilters = () => {
 
     cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow || specifiedFiltersShow);
   }
-
-  // check purchases
-  const baseCardUids = baseCards.map(card => card.uid.toLowerCase());
-  for (const purchaseEle of [...libraryCardEles.filter(ele => ele.tagName == "PURCHASE")]) {
-    const uid = purchaseEle.getAttribute("uid").toLowerCase();
-    
-    const hasCardsMatching = libraryCardEles
-      .filter(ele => ele.tagName == "CARD")
-      .map(ele => ele.getAttribute("uid").toLowerCase())
-      .filter(cardUid => !baseCardUids.includes(cardUid))
-      .find(cardUid => (cardUid || "").indexOf(uid) != -1);
-
-    console.log(hasCardsMatching);
-
-    purchaseEle.classList.toggle("inactive", !!hasCardsMatching);
-  }
 }

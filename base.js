@@ -52,6 +52,10 @@ const awaitFrame = () => new Promise(resolve => {
   window.requestAnimationFrame(resolve);
 });
 
+const awaitTime = (time) => new Promise(resolve => {
+  setTimeout(resolve, time);
+});
+
 const updateDeck = () => {
   // work out total points in deck :D
   const cards = deck.map(deckStore => [deckStore, ...(deckStore.upgrades || [])]).flat().map(deckStore => cardsStore[deckStore.uid]);
@@ -83,7 +87,7 @@ const setDeckFocusCard = (newDeckFocusCard) => {
   deckFocusCard = newDeckFocusCard;
 };
 
-const getCardFromPoint = (x, y, canBePurchase) => {
+const getCardFromPoint = (x, y, {canBePurchase, canBeChild} = {}) => {
   const pointEles = document.elementsFromPoint(x, y);
   const isLibrary = document.body.getAttribute("showing") == "library";
 
@@ -110,15 +114,15 @@ const getCardFromPoint = (x, y, canBePurchase) => {
   }
 }
 
-const getPointerCardEle = (touch, canBePurchase) => {
+const getPointerCardEle = (touch, options) => {
   const x = touch.pageX;
   const y = touch.pageY;
 
-  return getCardFromPoint(x, y, canBePurchase);
+  return getCardFromPoint(x, y, options);
 };
 
-const getCenterCardEle = (canBePurchase) => {
-  return getCardFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5, canBePurchase);
+const getCenterCardEle = (options) => {
+  return getCardFromPoint(window.innerWidth * 0.5, window.innerHeight * 0.5, options);
 };
 
 const modalOverlayEle = document.querySelector("modalOverlay");
@@ -199,6 +203,49 @@ const showInput = async (content) => {
 
   return returnValue;
 };
+const showOption = async (content, options) => {
+  // hide the background 
+  modalOverlayEle.classList.remove("hidden");
+  modalOverlayEle.classList.add("option");
+
+  // change the text, return true if they hit true/false false. 
+  modalOverlayTextEle.innerHTML = content;
+
+  // attach events to the text input
+
+  const returnValue = await new Promise((resolve, reject) => {
+    const onFinished = (event) => {
+      // remove the button binds.
+      // unbind the buttons.
+      const id = event.target.getAttribute("id");
+
+      modalOverlayReturnButtonEle.removeEventListener("click", onFinished);
+
+      resolve(id == "modalReturn" ? false : event.target.innerHTML);
+    };
+  
+    for (const option of options) {
+      const optionButton = document.createElement("modalButton");
+      optionButton.innerHTML = option;
+      optionButton.classList.add("fullwidth");
+
+      optionButton.addEventListener("click", onFinished);
+  
+      modalOverlayTextEle.append(optionButton);
+    }
+    
+    modalOverlayReturnButtonEle.addEventListener("click", onFinished);
+  });
+
+  // hide the overlay
+  modalOverlayEle.classList.add("hidden");
+
+  awaitTime(200).then(() => {
+    modalOverlayEle.classList.remove("option");
+  });
+
+  return returnValue;
+}
 const showToast = (() => {
   var currentToastTimeout;
 
@@ -533,11 +580,17 @@ const init = async () => {
   window.addEventListener('resize', updateAppSize)
   updateAppSize()
 
-  database = await idb.openDB('relicbladeCards', 2, {
+  database = await idb.openDB('relicbladeCards', 3, {
     upgrade: (db, oldVersion) => {
-      if (oldVersion == 1) {
+      if (oldVersion < 2) {
         localStorage.setItem("deck", JSON.stringify([]));
-        db.deleteObjectStore('cards');
+      }
+      if (oldVersion < 3) {
+        try {
+          db.deleteObjectStore('cards');
+        } catch (err) {
+          // ignore error
+        }
       }
 
       const cardObjectStore = db.createObjectStore('cards', { keyPath: 'index', autoIncrement: true }); 
@@ -550,9 +603,13 @@ const init = async () => {
     const baseTransaction = database.transaction('cards', 'readwrite');
     const baseObjectStore = baseTransaction.objectStore('cards');
 
-    for (const baseCard of baseCards) {
+    const allCards = await baseObjectStore.getAll();
+
+    for (const baseCardKey of Object.keys(baseCards)) {
+      if (allCards.find(card => card.uid == baseCardKey)) continue;
+
       try {
-        await baseObjectStore.add({uid: baseCard.uid, image: baseCard.image});
+        await baseObjectStore.add({uid: baseCardKey, image: baseCards[baseCardKey]});
       } catch (err) {
         console.error(err);
       }
@@ -623,12 +680,20 @@ const init = async () => {
   applyFilters();
   applyCarousel();
 
-  showLibraryButton.addEventListener('click', async () => {
+  const onShowLibrary = async (event) => {
+    if (event) {
+      attachCharacter = undefined;
+    }
+    
     document.body.className = '';
 
     if (document.body.getAttribute("showing") !== 'deck') return;
     const centerCardEle = getCenterCardEle();
-    console.log(`Save deck card - ${centerCardEle.getAttribute("uid")}`);
+
+    if (centerCardEle) {
+      console.log(`Save deck card - ${centerCardEle.getAttribute("uid")}`);
+    }
+
     setDeckFocusCard(centerCardEle);
     // get the top level element
 
@@ -643,7 +708,9 @@ const init = async () => {
     const cardScrollX = (libraryFocusCard?.offsetLeft || 0) - screenWidthOffset;
 
     scrollScroller(cardScrollX);
-  });
+  };
+
+  showLibraryButton.addEventListener('click', onShowLibrary);
   searchButton.addEventListener('click', async () => {
     // check if we're already searching
     if (document.body.getAttribute("showing") !== 'library') return;
@@ -667,7 +734,7 @@ const init = async () => {
 
     setSubFilter();
 
-    const currentCard = getCenterCardEle(true);
+    const currentCard = getCenterCardEle({canBePurchase: true});
     libraryFocusCard = currentCard;
 
     // scroll to the last library focused' card
@@ -700,7 +767,7 @@ const init = async () => {
       setDeckFocusCard(deckCurrentCardEle);
       attachCharacter = deck[currentCardIndex];
   
-      showLibraryButton.click();
+      onShowLibrary();
     });
   });
   addCharacterButton.addEventListener('click', () => {
@@ -731,6 +798,8 @@ const init = async () => {
 
       if (!currentFocusSubIndex) {
         const confirmValue = await showConfirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
+        await awaitTime(200);
+  
         if (!confirmValue) return;
 
         deck.splice(currentCardIndex, 1);
@@ -782,6 +851,8 @@ const init = async () => {
       // prompt the user saying the character can't ususally use this
       const upgradeType = getUpgradeType(cardsStore[uid]);
       const confirmValue = await showConfirm(`This character already has too many, ${upgradeType}s. Do you want to still add this?`);
+      await awaitTime(200);
+
       if (!confirmValue) return;
     }
 
@@ -820,6 +891,9 @@ const init = async () => {
       if (!currentCardEle) return;
       
       const confirmValue = await showConfirm('Are you sure you want to remove this card from your library?');
+
+      await awaitTime(200);
+
       if (!confirmValue) return;
   
       // remove it from the library.
@@ -964,6 +1038,89 @@ const init = async () => {
       applyDeckCardTopScroll(focusCard, newRangeScalar, false);
       // move the thing toward it.
     } while (delta < 1);
+
+    // do the next crap.
+  });
+
+  cardScrollerEle.addEventListener("contextmenu", async (event) => {
+    event.preventDefault();
+    // ignore if vertical
+    if (window.innerHeight > window.innerWidth) return;
+
+    const selectedCardEle = event.target;
+
+    if (!selectedCardEle) return;
+    if (selectedCardEle.tagName != "CARD") return;
+
+    // are we in grid mode
+    if (document.body.getAttribute("showing") == "library" && document.body.getAttribute("displayType") == "grid") return;
+    
+    // add selected to the card
+    awaitTime(100).then(() => {
+      selectedCardEle.classList.toggle("highlight", true);
+    })
+  
+    // are we in deck mode?
+    if (document.body.getAttribute("showing") == "deck") {
+      // center the card
+      const currentFocusCardEle = selectedCardEle;
+      const scrollLeft = currentFocusCardEle.closest("cardDeckWrapper").offsetLeft;
+      scrollScroller(scrollLeft - window.innerWidth * 0.5);
+
+      // show a modal with add upgrade, remove, cancel
+      const optionResult = await showOption("", ["Add Upgrade", "Remove"]);
+
+      selectedCardEle.classList.toggle("highlight", false);
+
+      await awaitTime(200);
+      
+      if (optionResult == "Add Upgrade") {
+        addUpgradeButtons[0].click();
+      } else if (optionResult == "Remove") {
+        removeFromDeckButtons[0].click();
+      }
+
+      return;
+    }
+
+    // center the card
+    const currentFocusCardEle = selectedCardEle;
+    const scrollLeft = currentFocusCardEle.offsetLeft;
+    scrollScroller(scrollLeft - window.innerWidth * 0.5);
+
+    // are we in attach upgrade mode?
+    if (attachCharacter) {
+      const attachedCharacterStore = cardsStore[attachCharacter.uid];
+      const confirmResult = await showConfirm(`Do you want to attach this card to ${attachedCharacterStore.name}?`);
+      
+      selectedCardEle.classList.toggle("highlight", false);
+
+      await awaitTime(200);
+      // await scrolling stopping
+      await awaitScrollStop();
+
+      if (confirmResult) {
+        attachUpgradeButton.click();
+      }
+
+      return;
+    }
+
+    // finally we're in add character mode
+    const confirmResult = await showConfirm(`Do you want to add this character to your deck?`);
+
+    await awaitTime(200);
+
+    selectedCardEle.classList.toggle("highlight", false);
+
+    // await scrolling stopping
+    await awaitScrollStop();
+
+    if (confirmResult) {
+      addToDeckButtons[0].click();
+    }
+
+    return;
   });
 
   cardScrollerEle.addEventListener("click", async (event) => {
@@ -1088,6 +1245,8 @@ const init = async () => {
     if (localJsonDecks[saveSlotIdx]) {
       const confirmValue = await showConfirm(`Are you sure you want to override ${localJsonDecks[saveSlotIdx].deckName || 'Untitled Deck'}?`);
 
+      await awaitTime(200);
+
       if (!confirmValue) {
         return;
       }
@@ -1119,6 +1278,8 @@ const init = async () => {
 
     if (deck.length) {
       const confirmValue = await showConfirm("If your current deck is unsaved, it will be lost. Are you sure you want to load a new deck?");
+
+      await awaitTime(200);
 
       if (!confirmValue) {
         return;
@@ -1172,6 +1333,8 @@ const init = async () => {
   newDeckEle.addEventListener("click", async (event) => {
     // create new deck
     const value = await showConfirm("If your current deck is unsaved, it will be lost. Are you sure you want to create a new deck?");
+
+    await awaitTime(200);
 
     if (!value) {
       return;
