@@ -126,7 +126,8 @@ cardList {
 card,
 purchase,
 import,
-add {
+add,
+random {
   position: relative;
   width: var(--card-width);
   height: var(--card-height);
@@ -162,14 +163,16 @@ cardDeckWrapper card {
 
 purchase,
 import,
-add {
+add,
+random {
   height: var(--card-width);
   background-color: #113e40;
 }
 
 purchase label,
 import label,
-add label {
+add label,
+random label {
   position: absolute;
   bottom: 10%;
   box-sizing: border-box;
@@ -917,7 +920,7 @@ edit {
   pointer-events: none;
 }
 
-add {
+add, random {
   margin-bottom: calc(var(--screen-height) * 0.1);
   background: url('./assets/addCharacter.png');
   background-size: 110%;
@@ -926,7 +929,8 @@ add {
 }
 
 add::after,
-import::after {
+import::after,
+random::after {
   content: '+';
   position: absolute;
   top: 11.5%;
@@ -939,6 +943,12 @@ import::after {
   color: #fff;
   filter: drop-shadow(0px 0px 2px black) drop-shadow(-2px -1px 2px black) drop-shadow(2px 2px 2px black);
   pointer-events: none;
+}
+
+random::after {
+  content: '?';
+  top: 18%;
+  font-size: 108px;
 }
 
 overlayMenu:not([showing="mainMenu"]) mainMenu,

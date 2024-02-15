@@ -50,7 +50,7 @@
     filter:drop-shadow(2px 4px 6px black);
   }
   
-  card, purchase, import, add {
+  card, purchase, import, add, random {
     margin: 0 min(2vw, 4px);
   }
 

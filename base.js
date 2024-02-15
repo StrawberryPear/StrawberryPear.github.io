@@ -35,6 +35,7 @@ const addUpgradeButtons = document.querySelectorAll("cardButton.addUpgrade");
 const showDeckButton = document.querySelector("cardButton.showDeck");
 const addToDeckButtons = document.querySelectorAll("cardButton.addToDeck");
 const addCharacterButton = document.querySelector("add");
+const randomRelicButton = document.querySelector("random");
 const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
 
 const deckTitleInput = document.querySelector("input#title");
@@ -776,6 +777,39 @@ const init = async () => {
     setSubFilter('character');
 
     showLibraryButton.click();
+  });
+  randomRelicButton.addEventListener('click', async () => {
+    // get all the relics
+    const relicEles = [...cardLibraryListEle.children].filter(ele => {
+      const uid = ele.getAttribute("uid")
+      const cardStore = cardsStore[uid];
+
+      return cardStore && cardStore.types.match(/relic/i);
+    });
+
+    const randomRelicEle = relicEles[Math.floor(Math.random() * relicEles.length)];
+
+    if (!randomRelicEle) return;
+
+    const cardEleClone = addCharacterToDeck({uid: randomRelicEle.getAttribute("uid")});
+    if (!cardEleClone) return;
+
+    updateDeck();
+
+    await awaitTime(200);
+
+    // scroll to the newly created card
+    const currentFocusCardEle = cardEleClone;
+    const scrollLeft = currentFocusCardEle.closest("cardDeckWrapper").offsetLeft;
+    scrollScroller(scrollLeft - window.innerWidth * 0.5);
+
+    showToast(`Random Relic Added`);
+    
+    // highlight the card
+    cardEleClone.classList.add("highlight");
+
+    await awaitTime(500);
+    cardEleClone.classList.remove("highlight");
   });
 
   removeFromDeckButtons.forEach(removeForDeckButton => {
