@@ -49,6 +49,14 @@ const saveDeckEle = document.querySelector('menuControl.saveDeck');
 const loadDeckEle = document.querySelector('menuControl.loadDeck');
 const overlayMenuEle = document.querySelector('overlayMenu');
 
+const getSId = (() => {
+  var uid = 0;
+
+  return () => {
+    return uid++;
+  }
+})();
+
 const awaitFrame = () => new Promise(resolve => {
   window.requestAnimationFrame(resolve);
 });
@@ -370,8 +378,12 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
   cardCloneEle.className = "";
   wrapperEle.append(cardCloneEle);
 
+  const sessionId = getSId();
+
   // create mark boxes...
-  (cardStore.markBoxes || []).forEach(([boxX, boxY, marked]) => {
+  (cardStore.markBoxes || []).forEach(([boxX, boxY], index) => {
+    // check if the box should be marked
+    const dataMarked = (data.marked || [])[index];
 
     const boxEle = document.createElement("markBox");
 
@@ -381,8 +393,23 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
     boxEle.style.setProperty("left", `${boxX * 100}%`);
     boxEle.style.setProperty("transform", `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`);
 
+    if (dataMarked) {
+      boxEle.classList.add("marked");
+    }
+
     boxEle.addEventListener("click", () => {
-      boxEle.classList.toggle("marked");
+      const willBeMarked = !boxEle.classList.contains("marked");
+
+      boxEle.classList.toggle("marked", willBeMarked);
+
+      // get the cards index by the sid
+      const cardIndex = deck.findIndex(card => card.sid == sessionId);
+      if (cardIndex == -1) return;
+
+      deck[cardIndex].marked = deck[cardIndex].marked || [];
+      deck[cardIndex].marked[index] = willBeMarked;
+
+      updateDeck();
     });
   });
 
@@ -391,6 +418,8 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
       uid
     });
   }
+  // give it a new SID
+  data.sid = sessionId;
 
   if (data.upgrades) {
     data.upgrades.forEach((upgrade) => {
@@ -1356,6 +1385,12 @@ const init = async () => {
     loadDeckFromLocal();
     // hide the menu
     overlayMenuEle.classList.add("hidden");
+
+    // show deck
+    showDeckButton.click();
+
+    // scroll to the front
+    scrollScroller(0);
 
     showToast(`Deck, ${deckName || "Untitled Deck"} loaded!`);
   };
