@@ -1026,3 +1026,8 @@ modalbutton#modalReturn {
 }
 
 modaltext {}
+
+::placeholder {
+  color: #222c;
+  opacity: 1;
+}
