@@ -563,7 +563,7 @@ const init = async () => {
     return false; 
   });
 
-  document.body.setAttribute("data-longpress-delay", 150);
+  document.body.setAttribute("data-long-press-delay", 150);
   document.body.addEventListener("long-press", (event) => {
     console.log('long-press');
     event.preventDefault();
@@ -1102,7 +1102,7 @@ const init = async () => {
     // do the next crap.
   });
 
-  cardScrollerEle.setAttribute("data-long-press-delay", 200);
+  cardScrollerEle.setAttribute("data-long-press-delay", 400);
   cardScrollerEle.addEventListener("long-press", async (event) => {
     event.preventDefault();
     // ignore if vertical

@@ -1744,12 +1744,12 @@ const cardsStore = {
     },
     "Singular Champions 1 - 5": {
       "uid": "Singular Champions 1 - 5",
-      "base": " ",
-      "cost": "0",
-      "name": "",
-      "classes": "",
-      "keywords": "",
-      "types": "",
+      "base": "feral valor beast barbarian defense disabled 2 upgrade tactic",
+      "cost": "2",
+      "name": "feral valor",
+      "classes": "beast barbarian",
+      "keywords": "defense disabled",
+      "types": "upgrade tactic",
       "factions": ""
     },
     "Singular Champions 1 - 6": {
