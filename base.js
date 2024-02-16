@@ -557,13 +557,16 @@ const loadDeckFromLocal = () => {
 // initialize the database.
 const init = async () => {
   // constantly measure the scrolling
-  const touchHandler = (ev) => {
-    ev.preventDefault() // Prevent text selection
-  };
-  document.addEventListener('touchstart', touchHandler, {passive:false});
-  document.addEventListener('touchmove', touchHandler, {passive:false});
-  document.addEventListener('touchend', touchHandler, {passive:false});
-  document.addEventListener('touchcancel', touchHandler, {passive:false});
+
+  document.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    document.body.click();
+  });
+  
+  cardScrollerEle.setAttribute("data-long-press-delay", 150);
+  cardScrollerEle.addEventListener("long-press", async (event) => {
+    event.preventDefault();
+  });
 
 
   const updateAppSize = () => {
