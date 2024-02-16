@@ -1076,7 +1076,8 @@ const init = async () => {
     // do the next crap.
   });
 
-  cardScrollerEle.addEventListener("contextmenu", async (event) => {
+  cardScrollerEle.setAttribute("data-long-press-delay", 200);
+  cardScrollerEle.addEventListener("long-press", async (event) => {
     event.preventDefault();
     // ignore if vertical
     if (window.innerHeight > window.innerWidth) return;

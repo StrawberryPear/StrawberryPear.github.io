@@ -83,6 +83,9 @@ body {
   max-height: calc(var(--screen-height));
 }
 
+* { -webkit-touch-callout: none !important; }
+* { -webkit-user-select: none !important; }
+
 cardScroller {
   display: block;
   height: 100%;
