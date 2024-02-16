@@ -127,7 +127,7 @@
     margin-left: -1px;
   }
    
-  mainMenu {
+  mainMenu, savesMenu {
     align-items: flex-end;
     padding-right: 48px;
     box-sizing: border-box;
@@ -155,10 +155,10 @@
     right: 0;
     bottom: 0;
     border: 3px solid #58d5e6;
+    outline: 6px solid #58d5e688;
     border-radius: 3.8%;
     opacity: 0;
     transition: opacity 0.2s;
-    filter: drop-shadow(10px 10px 10px #58d5e6) drop-shadow(-10px -10px 10px #58d5e6) drop-shadow(10px -10px 10px #58d5e6) drop-shadow(-10px 10px 10px #58d5e6);
   }
   card.highlight::before {
     opacity: 1;

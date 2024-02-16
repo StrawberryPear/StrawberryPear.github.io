@@ -557,22 +557,32 @@ const loadDeckFromLocal = () => {
 // initialize the database.
 const init = async () => {
   // constantly measure the scrolling
-
   document.addEventListener("contextmenu", (event) => {
+    console.log('contextmenu');
     event.preventDefault();
-    document.body.click();
-  });
-  
-  cardScrollerEle.setAttribute("data-long-press-delay", 150);
-  cardScrollerEle.addEventListener("long-press", async (event) => {
-    event.preventDefault();
+    return false; 
   });
 
+  document.body.setAttribute("data-longpress-delay", 150);
+  document.body.addEventListener("long-press", (event) => {
+    console.log('long-press');
+    event.preventDefault();
+    awaitFrame().then(() => {
+      document.body.click();
+    });
+    return false;
+  });
 
-  const updateAppSize = () => {
+  const updateAppSize = async (event) => {
+    console.log('resizeEventFired');
     const doc = document.documentElement;
+
+    const currentScreenWidth = doc.style.getPropertyValue('--screen-width');
+
     doc.style.setProperty('--screen-height', `${window.innerHeight}px`);
     doc.style.setProperty('--screen-width', `${window.innerWidth}px`);
+
+    doc.style.setProperty('--screen-width-raw', `${window.innerWidth}`);
 
     window?.plugins?.safearea?.get(
       (result) => {
@@ -586,9 +596,15 @@ const init = async () => {
         // maybe set some sensible fallbacks?
       }
     );
+
+    console.log(`sw: ${currentScreenWidth}`);
   }
-  document.addEventListener("resume", updateAppSize);
-  window.addEventListener('resize', updateAppSize)
+  const triggerReload = async () => {
+    await awaitFrame();
+    window.location.reload();
+  };
+  document.addEventListener("resume", triggerReload);
+  window.addEventListener('resize', triggerReload)
   updateAppSize()
 
   database = await idb.openDB('relicbladeCards', 3, {
