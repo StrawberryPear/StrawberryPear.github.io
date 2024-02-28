@@ -55,7 +55,7 @@ const getAllPossibleWarbands = (pointTarget, team) => {
   });
 }
 
-const goodWarbandsKeys = getAllPossibleWarbands(50, "G");
+const goodWarbandsKeys = [["questingKnight", "wardenOfJustice"], ["wardenOfJustice", "clericOfJustice"],["clericOfJustice", "questingKnight"]];
 const evilWarbandsKeys = getAllPossibleWarbands(50, "E");
 
 const MATCH_COUNT = 1;

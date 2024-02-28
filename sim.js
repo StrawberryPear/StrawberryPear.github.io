@@ -22,8 +22,8 @@ const getId = (() => {
 const characterStore = fs.readFileSync('./simCharacters.js', 'utf8');
 const upgradeStore = fs.readFileSync('./simUpgrades.js', 'utf8');
 
-const UPGRADES = JSON.parse(upgradeStore);
-const CHARACTERS = JSON.parse(characterStore);
+const UPGRADES = eval(upgradeStore);
+const CHARACTERS = eval(characterStore);
 const BASE_ACTIONS = [
   {key: "Charge", type: "charge", condition: "target.x != character.x", target: [0], range: "character.move + character.combatRange"},
   {key: "Improvised Attack", type: "melee", damage: 0, target: [0], range: "character.move"},
@@ -46,6 +46,7 @@ const getCharacterOfKey = (key, x, team) =>{
   character.team = team;
   character.currentHealth = character.health;
   character.statuses = [];
+  character.triggers = character.triggers || [];
   character.activated = false;
 
   character._armor = character.armor;
@@ -180,6 +181,9 @@ const doCombat = (characters) => {
     character.hasFocused = false;
     character.missedAttacksThisActivation = 0;
 
+    // refresh character triggers
+    character.triggers.forEach(trigger => trigger.activated = false)
+
     // TODO: check to apply statuses -- poison
     if (character.currentHealth <= character.criticalHealth) {
       character.currentActivations -= 1;
@@ -306,6 +310,24 @@ const doCombat = (characters) => {
           const damageTaken = Math.max(0, challengeDamage - challengeDefence);
 
           if (damageTaken > 0) attackDidDamage = true;
+
+          // check triggers
+          enemyCharacters
+            // you are not an ally of yourself
+            .filter(enemy => enemy.uid != target.uid)
+            .forEach(triggerCharacter => {
+            const allyDamageTrigger = triggerCharacter.triggers
+              .filter(trigger => trigger.type == "allyDamage")
+              // remove triggers that have been used since last activation
+              .filter(trigger => !trigger.activated)
+              // find the first trigger that has a working condition
+              .find(trigger => !trigger.condition || eval(trigger.condition));
+            
+            if (!allyDamageTrigger) return;
+
+            eval(allyDamageTrigger.effect);
+            allyDamageTrigger.activated = true;
+          });
 
           target.currentHealth = Math.max(0, target.currentHealth - damageTaken);
 
@@ -480,8 +502,12 @@ const getAllPossibleWarbands = (pointTarget, team) => {
   });
 }
 
-const goodWarbandsKeys = getAllPossibleWarbands(50, "G");
-const evilWarbandsKeys = getAllPossibleWarbands(50, "E");
+const goodWarbandsKeys = [
+  ["questingKnight", "wardenOfJustice"], 
+];
+const evilWarbandsKeys = [
+  ["questingKnight", "swarmLord"]
+];
 
 const MATCH_COUNT = 24;
 
@@ -510,26 +536,14 @@ for (const evilWarbandKeys of evilWarbandsKeys) {
 const characterResults = [];
 
 for (const character of CHARACTERS) {
-  if (character.team == "G") {
-    const keyResults = warbandResults.filter(result => result.good.includes(character.key));
-    const ratio = keyResults.reduce((sum, result) => sum + result.ratio, 0) / keyResults.length;
+  // neutral
+  const goodKeyResults = warbandResults.filter(result => result.good.includes(character.key));
+  const goodRatio = goodKeyResults.reduce((sum, result) => sum + result.ratio, 0) / goodKeyResults.length;
 
-    characterResults.push({key: character.key, ratio});
-  } else if (character.team == "E") {
-    const keyResults = warbandResults.filter(result => result.evil.includes(character.key));
-    const ratio = 1 - (keyResults.reduce((sum, result) => sum + result.ratio, 0) / keyResults.length);
+  const evilKeyResults = warbandResults.filter(result => result.evil.includes(character.key));
+  const evilRatio = 1 - (evilKeyResults.reduce((sum, result) => sum + result.ratio, 0) / evilKeyResults.length);
 
-    characterResults.push({key: character.key, ratio});
-  } else {
-    // neutral
-    const goodKeyResults = warbandResults.filter(result => result.good.includes(character.key));
-    const goodRatio = goodKeyResults.reduce((sum, result) => sum + result.ratio, 0) / goodKeyResults.length;
-
-    const evilKeyResults = warbandResults.filter(result => result.evil.includes(character.key));
-    const evilRatio = 1 - (evilKeyResults.reduce((sum, result) => sum + result.ratio, 0) / evilKeyResults.length);
-
-    characterResults.push({key: character.key, ratio: Math.max(goodRatio, evilRatio), goodRatio, evilRatio});
-  }
+  characterResults.push({key: character.key, ratio: Math.max(goodRatio, evilRatio), goodRatio, evilRatio});
 }
 
 // get the top ten and bottom ten warbands.

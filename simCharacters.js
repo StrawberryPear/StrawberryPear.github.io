@@ -82,15 +82,6 @@
     "armor": 2,
     "actions": [
       {
-        "key": "Sacred Blade",
-        "type": "melee",
-        "target": [
-          3
-        ],
-        "damage": 3,
-        "canFocus": true
-      },
-      {
         "key": "Inner Peace",
         "type": "custom",
         "target": [
@@ -109,6 +100,30 @@
         ],
         "damage": 3,
         "canFocus": true
+      },
+      {
+        "key": "Sacred Blade",
+        "type": "melee",
+        "target": [
+          3
+        ],
+        "damage": 3,
+        "canFocus": true
+      }
+    ],
+    "triggers": [
+      {
+        "key": "Guardian",
+        "type": "allyDamage",
+        "range": 3,
+        "condition": `(() => {
+          var dd = Math.min(3, damageTaken); 
+
+          return target.currentHealth <= damageTaken && target.currentHealth > (damageTaken - dd) && (triggerCharacter.currentHealth > dd || (target.points > triggerCharacter.points && !target.activated))})()`,
+        "effect": `var dd = Math.min(3, damageTaken);
+  
+        target.currentHealth += dd; 
+        triggerCharacter.currentHealth = Math.max(0, triggerCharacter.currentHealth - dd)`
       }
     ],
     "health": 5,
@@ -441,6 +456,23 @@
         ],
         "damage": 2,
         "canFocus": true
+      }
+    ],
+    "triggers": [
+      {
+        "key": "Guardian",
+        "type": "allyDamage",
+        "range": 3,
+        "condition": `(() => {
+          var dd = Math.min(3, damageTaken); 
+
+          return target.currentHealth <= damageTaken && target.currentHealth > (damageTaken - dd) && (triggerCharacter.currentHealth > dd || (target.points > triggerCharacter.points && !target.activated))})()`,
+        "effect": `(() => {
+          var dd = Math.min(3, damageTaken);
+        
+          target.currentHealth += dd; 
+          triggerCharacter.currentHealth = Math.max(0, triggerCharacter.currentHealth - dd)
+        })()`
       }
     ],
     "health": 6,
