@@ -37,19 +37,24 @@
   --screen-width: 100%;
   --screen-height: 100%;
 
+  --screen-width-raw: 100;
+
   --safe-area-top: 0px;
   --safe-area-bottom: 0px;
 
   --card-base-width: 269;
   --card-base-height: 367;
 
-  --card-width: min(var(--screen-width), calc(1.025 * var(--screen-height) - 297px) * (var(--card-base-width) / var(--card-base-height)));
-  --card-height:
-    calc(var(--card-width) * (var(--card-base-height) / var(--card-base-width)) * 1.025);
+  --card-ratio: calc(var(--card-base-height) / var(--card-base-width));
+
+  --height-based-card-width: calc((var(--screen-height) - 252px) / var(--card-ratio));
+  --width-based-card-width: calc(var(--screen-width) * 0.98);
+
+  --card-width: min(var(--height-based-card-width), var(--width-based-card-width));
+  --card-height: calc(var(--card-width) * var(--card-ratio) * 1.025);
     
-  --card-width-deck: min(1.025 * var(--screen-width), calc(1.025 * var(--screen-height) - 267px) * (var(--card-base-width) / var(--card-base-height)));
-  --card-height-deck:
-    calc(var(--card-width-deck) * (var(--card-base-height) / var(--card-base-width)) * 1.025);
+  --card-width-deck: var(--card-width);
+  --card-height-deck: var(--card-height);
 
   --card-width-grid: calc(var(--screen-width) / 3);
   --card-height-grid: calc((var(--screen-width) / 3) * (var(--card-base-height) / var(--card-base-width)));
@@ -58,11 +63,6 @@
     max(0px, 0.6 * var(--screen-height) - calc(var(--card-height)));
   --nav-height: 48px;
   --foot-height: 44px;
-}
-
-html {
-  padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
 }
 
 html,
@@ -81,6 +81,12 @@ body {
   position: fixed;
   height: calc(var(--screen-height));
   max-height: calc(var(--screen-height));
+}
+
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none !important; 
 }
 
 cardScroller {
@@ -331,8 +337,6 @@ cardControl::before {
   background-size: auto 80%;
 }
 
-cardControl.inactive {}
-
 cardControl.filterCharacter::before {
   content: '';
   background-image: url('./assets/character.png');
@@ -429,8 +433,6 @@ modalButton {
 cardButton {
   filter: drop-shadow(2px 4px 6px black);
 }
-
-cardButton.removeFromDeck::before {}
 
 cardButtons.searched cardButton.search,
 cardButtons:not(.searched) cardButton.clearSearch {
@@ -579,7 +581,7 @@ modalOverlay {
   width: 100%;
   height: 100%;
   opacity: 1;
-  transition: opacity 0.2s;
+  transition: opacity 0.4s;
   user-select: none;
   /* z-index: 10; */
 }
@@ -737,7 +739,7 @@ body[displayType="grid"] cardlist.library import label {
 cardCarousel {
   display: none;
   width: 100%;
-  height: calc(var(--card-height) * 0.125);
+  height: min(calc(var(--screen-height) - var(--card-height) - 180px), 96px);
   margin-bottom: calc(var(--screen-height) * 0.01);
   /* background: url(
     './assets/toastBack.png'); */
@@ -851,8 +853,8 @@ card>card:nth-of-type(2) {
 }
 
 body[showing="deck"] cardButtons {
-  position: fixed;
-  bottom: var(--safe-area-bottom);
+  position: absolute;
+  bottom: 0px;
 }
 
 body[showing="deck"] cardScrollerContainer {
@@ -862,6 +864,10 @@ body[showing="deck"] cardScrollerContainer {
   top: calc(-1 * var(--nav-height));
   /* padding-bottom: var(--nav-height); */
   box-sizing: border-box;
+}
+
+body[displayType="grid"] cardScrollerContainer {
+  height: calc(var(--screen-height) - 156px);
 }
 
 cardlist.deck {
@@ -933,12 +939,12 @@ import::after,
 random::after {
   content: '+';
   position: absolute;
-  top: 11.5%;
-  width: 100%;
-  left: 0px;
-  right: 0px;
+  width: 30%;
+  left: 50%;
+  top: 40%;
   font-family: tradeWinds;
-  font-size: 144px;
+  font-size: calc(100px + (var(--card-width) - 300px) / 2);
+  transform: translate(-50%, -50%);
   text-align: center;
   color: #fff;
   filter: drop-shadow(0px 0px 2px black) drop-shadow(-2px -1px 2px black) drop-shadow(2px 2px 2px black);
@@ -947,8 +953,8 @@ random::after {
 
 random::after {
   content: '?';
-  top: 18%;
-  font-size: 108px;
+  top: 38%;
+  font-size: calc(80px + (var(--card-width) - 300px) / 2);
 }
 
 overlayMenu:not([showing="mainMenu"]) mainMenu,
@@ -985,7 +991,7 @@ modaloverlay {
   padding-bottom: 10%;
   box-sizing: border-box;
   z-index: 10;
-  transition: opacity 0.3s;
+  transition: opacity 0.4s;
 }
 
 modaltext {
@@ -1010,11 +1016,7 @@ modalbuttons {
   margin-top: 32px;
 }
 
-modalbutton#modalReturn {}
-
 modalbutton#modalReturn {
   grid-column: 2;
   background-image: url(./assets/add-remove-flipped.png);
 }
-
-modaltext {}

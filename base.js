@@ -1,4 +1,7 @@
-const SCALE = 6;
+import cardsStore from './store.js';
+import baseCards from './baseCards.js'
+
+const SCALE = 4;
 
 const CARD_WIDTH = Math.round(180 * SCALE);
 const CARD_HEIGHT = Math.round(250 * SCALE);
@@ -48,6 +51,14 @@ const newDeckEle = document.querySelector('menuControl.newDeck');
 const saveDeckEle = document.querySelector('menuControl.saveDeck');
 const loadDeckEle = document.querySelector('menuControl.loadDeck');
 const overlayMenuEle = document.querySelector('overlayMenu');
+
+const getSId = (() => {
+  var uid = 0;
+
+  return () => {
+    return uid++;
+  }
+})();
 
 const awaitFrame = () => new Promise(resolve => {
   window.requestAnimationFrame(resolve);
@@ -370,8 +381,12 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
   cardCloneEle.className = "";
   wrapperEle.append(cardCloneEle);
 
+  const sessionId = getSId();
+
   // create mark boxes...
-  (cardStore.markBoxes || []).forEach(([boxX, boxY, marked]) => {
+  (cardStore.markBoxes || []).forEach(([boxX, boxY], index) => {
+    // check if the box should be marked
+    const dataMarked = (data.marked || [])[index];
 
     const boxEle = document.createElement("markBox");
 
@@ -381,8 +396,23 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
     boxEle.style.setProperty("left", `${boxX * 100}%`);
     boxEle.style.setProperty("transform", `translate(-50%, -50%) rotate(${Math.random() * 10 - 5}deg)`);
 
+    if (dataMarked) {
+      boxEle.classList.add("marked");
+    }
+
     boxEle.addEventListener("click", () => {
-      boxEle.classList.toggle("marked");
+      const willBeMarked = !boxEle.classList.contains("marked");
+
+      boxEle.classList.toggle("marked", willBeMarked);
+
+      // get the cards index by the sid
+      const cardIndex = deck.findIndex(card => card.sid == sessionId);
+      if (cardIndex == -1) return;
+
+      deck[cardIndex].marked = deck[cardIndex].marked || [];
+      deck[cardIndex].marked[index] = willBeMarked;
+
+      updateDeck();
     });
   });
 
@@ -391,6 +421,8 @@ const addCharacterToDeck = (data, updateDeckStore = true) => {
       uid
     });
   }
+  // give it a new SID
+  data.sid = sessionId;
 
   if (data.upgrades) {
     data.upgrades.forEach((upgrade) => {
@@ -554,31 +586,566 @@ const loadDeckFromLocal = () => {
   });
 }
 
+/* #REGION LOAD SCRIPTS */
+  const getCardLibraryPlacementBeforeEle = (placeCard) => {
+    const libraryCardEles = [...cardLibraryListEle.children];
+
+    const getCardSortWeighting = (cardEle) => {
+      const cardUID = cardEle.getAttribute('uid');
+      const cardStore = cardsStore[cardUID];
+
+      if (!cardStore) return;
+
+      // is character / summon adjacent
+      const isSummonOrCharacter = !!cardStore.types.match(/(character|summon)/i);
+      const isAdvocate = !!cardStore.factions.match(/advocate/i);
+      const isAdversary = !!cardStore.factions.match(/adversary/i);
+      const cardSet = cardUID.substr(0, cardUID.length - 4);
+
+      const isUpgrade = !!cardStore.types.match(/upgrade/i);
+      const isRelic = !!cardStore.types.match(/relic/i);
+
+      const score = (() => {
+        if (isSummonOrCharacter) {
+          if (isAdvocate) {
+            return 0;
+          } 
+          if (isAdversary) {
+            return 1;
+          }
+          return 2;
+        }
+        if (isUpgrade) {
+          return 3;
+        }
+        if (isRelic) {
+          return 4;
+        }
+        return 5;
+      })();
+
+      return `${score}${cardSet}${cardStore}`
+    }
+
+    const placeCardWeighting = getCardSortWeighting(placeCard);
+
+    for (const card of libraryCardEles) {
+      const cardWeighting = getCardSortWeighting(card);
+
+      if (placeCardWeighting < cardWeighting) {
+        return card;
+      }
+    }
+    return undefined;
+  };
+
+  const loadCardDataFromUrl = (() => {
+    const loadingCanvas = document.createElement('canvas');
+
+    const CARD_ROWS = 3;
+    const CARD_COLS = 3;
+    const CARD_PER_PAGE = CARD_ROWS * CARD_COLS;
+
+    const CARD_ROW_OFFSET = 10;
+
+    return async (url) => {
+      var { pdfjsLib } = globalThis;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf/pdf.worker.mjs';
+      
+      const cardImages = [];
+
+      const loadingTask = pdfjsLib.getDocument(url);
+
+      const getCanvasDataURL = (() => {
+        const saveCanvas = document.createElement('canvas');
+
+        return async (originCanvas, x, y, w, h) => {
+          saveCanvas.width = w;
+          saveCanvas.height = h;
+
+          const saveContext = saveCanvas.getContext('2d');
+
+          saveContext.drawImage(originCanvas, x, y, w, h, 0, 0, w, h);
+
+          // check if it has a border most of the way around, at least 90%.
+          const imageData = saveContext.getImageData(0, 0, w, h);
+          const pixelData = imageData.data;
+
+          var blackCount = 0;
+
+          const bottomOffset = (h - 1) * w * 4;
+          const rightOffset = (w - 1) * 4;
+
+          for (var xi = 0; xi < w; xi++) {
+            const ri = xi * 4;
+            const gi = xi * 4 + 1;
+            const bi = xi * 4 + 2;
+
+            const topPixel = pixelData[ri] + pixelData[gi] + pixelData[bi];
+            const bottomPixel = pixelData[bottomOffset + ri] + pixelData[bottomOffset + gi] + pixelData[bottomOffset + bi];
+            
+            blackCount += topPixel + bottomPixel;
+          }
+          
+          for (var yi = 0; yi < h; yi++) {
+            const oi = yi * 4 * w;
+
+            const ri = oi;
+            const gi = oi + 1;
+            const bi = oi + 2;
+
+            const leftPixel = pixelData[ri] + pixelData[gi] + pixelData[bi];
+            const rightPixel = pixelData[rightOffset + ri] + pixelData[rightOffset + gi] + pixelData[rightOffset + bi];
+
+            blackCount += leftPixel + rightPixel;
+          }
+          
+          const MAX_PIXEL_VALUE = (w * 2 + h * 2) * 3 * 255;
+
+          if (blackCount > MAX_PIXEL_VALUE * 0.05) {
+            return '';
+          }
+
+          return saveCanvas.toDataURL('image/jpeg', 0.94);
+        }
+      })();
+
+      const pdf = await loadingTask.promise;
+      const metaData = await pdf.getMetadata();
+
+      var totalPages = pdf.numPages
+      var data = [];
+
+      for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+        const page = await pdf.getPage(pageNumber);
+        
+        const text = await page.getTextContent();
+
+        var viewport = page.getViewport({ scale: SCALE });
+
+        // Prepare canvas using PDF page dimensions
+        var context = loadingCanvas.getContext('2d');
+        loadingCanvas.height = viewport.height;
+        loadingCanvas.width = viewport.width;
+
+        // Render PDF page into canvas context
+        var renderContext = { canvasContext: context, viewport: viewport };
+
+        const render = await page.render(renderContext).promise;
+        
+        for (let i = 0; i < CARD_PER_PAGE; i++) {
+          const r = Math.floor(i / CARD_COLS);
+          const c = i % CARD_COLS;
+
+          const x = CARD_OFFSET_X + CARD_WIDTH * c;
+          const y = CARD_OFFSET_Y + CARD_HEIGHT * r + CARD_ROW_OFFSET * r;
+
+          const imageUrl = await getCanvasDataURL(loadingCanvas, x, y, CARD_WIDTH, CARD_HEIGHT);
+
+          await new Promise(resolve => window.requestAnimationFrame(resolve));
+
+          cardImages.push(imageUrl);
+        }
+      }
+
+      return [cardImages, metaData.info.Title];
+    }
+  })();
+
+  const loadCardsFromUrl = async (url) => {
+    const [images, title] = await loadCardDataFromUrl(url);
+
+    var cardsLoaded = 0;
+
+    for (const imageIndex in images) {
+      const image = images[imageIndex];
+
+      if (image.length < 8064) continue;
+
+      await addCardToDatabase(image, `${title} - ${cardsLoaded}`);
+    
+      cardsLoaded++;
+    }
+    
+    showToast(`${cardsLoaded} cards added to library`);
+  };
+
+  const loadCard = (card) => {
+    const cardEle = document.createElement('card');
+
+    cardEle.setAttribute('uid', card.uid);
+    cardEle.setAttribute('index', card.index);
+
+    // const cardStore = cardsStore[]
+    // if (card. == "DELETE"
+
+    // where should it be placed.
+    const beforeEle = getCardLibraryPlacementBeforeEle(cardEle);
+
+    if (beforeEle) {
+      cardLibraryListEle.insertBefore(cardEle, beforeEle);
+    } else {
+      cardLibraryListEle.append(cardEle);
+    }
+
+    cardEle.style.setProperty('background-image', `url('${card.image}')`);
+  };
+/* #ENDREGION LOAD SCRIPTS */
+
+/* #REGION FILTER SCRIPTS */
+  const filterCharactersEle = document.querySelector('cardControl.filterCharacter');
+  const filterAdvocateEle = document.querySelector('cardControl.filterAdvocate');
+  const filterAdversaryEle = document.querySelector('cardControl.filterAdversary');
+  const filterNeutralEle = document.querySelector('cardControl.filterNeutral');
+
+  const filterUpgradeEle = document.querySelector('cardControl.filterUpgrade');
+  const filterTacticEle = document.querySelector('cardControl.filterTactic');
+  const filterPotionEle = document.querySelector('cardControl.filterPotion');
+  const filterItemEle = document.querySelector('cardControl.filterItem');
+  const filterWeaponEle = document.querySelector('cardControl.filterWeapon');
+  const filterSpellEle = document.querySelector('cardControl.filterSpell');
+  const filterRelicUpgradeEle = document.querySelector('cardControl.filterRelicUpgrade');
+
+  const filterRelicEle = document.querySelector('cardControl.filterRelic');
+
+  var searchText = '';
+  var subFilter;
+  var specifiedFilters;
+  const filters = {
+    character: {
+      ele: filterCharactersEle,
+      filter: /character/i,
+      active: false
+    },
+    advocate: {
+      ele: filterAdvocateEle,
+      filter: /advocate/i,
+      active: false
+    },
+    adversary: {
+      ele: filterAdversaryEle,
+      filter: /adversary/i,
+      active: false
+    },
+    neutral: {
+      ele: filterNeutralEle,
+      filter: /neutral/i,
+      active: false
+    },
+    upgrade: {
+      ele: filterUpgradeEle,
+      filter: /upgrade/i,
+      active: false
+    },
+    tactic: {
+      ele: filterTacticEle,
+      filter: /tactic/i,
+      active: false
+    },
+    potion: {
+      ele: filterPotionEle,
+      filter: /potion/i,
+      active: false
+    },
+    item: {
+      ele: filterItemEle,
+      filter: /item/i,
+      active: false
+    },
+    weapon: {
+      ele: filterWeaponEle,
+      filter: /weapon/i,
+      active: false
+    },
+    spell: {
+      ele: filterSpellEle,
+      filter: /spell/i,
+      active: false
+    },
+    relicUpgrade: {
+      ele: filterRelicUpgradeEle,
+      filter: /relic/i,
+      active: false
+    },
+    relic: {
+      ele: filterRelicEle,
+      filter: /relic/i,
+      active: false
+    }
+  };
+
+  const setSubFilter = (newFilter, newSpecifiedFilters) => {
+    if (subFilter == newFilter) return;
+
+    subFilter = newFilter;
+    specifiedFilters = newSpecifiedFilters;
+    document.body.setAttribute("subFilter", newFilter || "");
+
+    // clear all the filters
+    Object.values(filters).forEach(filter => {
+      filter.active = false;
+      filter.ele.classList.add("inactive");
+    });
+
+    applyFilters();
+  }
+
+  const setSearchText = (newSearchText) => {
+    searchText = newSearchText;
+    applyFilters();
+  }
+  const getSearchText = () => {
+    return searchText;
+  }
+
+  const applyFilters = () => {
+    const allFalse = !Object.values(filters).find(o => o.active);
+
+    const libraryCardEles = [...cardLibraryListEle.children];
+
+    for (const cardEle of libraryCardEles) {
+      const uid = cardEle.getAttribute('uid');
+      const cardStore = cardsStore[uid];
+
+      if (!cardStore) {
+        cardEle.classList.toggle('inactive', subFilter || !allFalse || !!getSearchText().trim());
+
+        continue;
+      }
+
+      const filterShow = Object.values(filters).find(o => {
+        return o.active && cardStore.base.match(o.filter);
+      });
+
+      const searchShow = `${/[A-z ]*/.exec(uid)[0].toLowerCase()} ${cardStore.base.toLowerCase()}`.includes(getSearchText().toLowerCase());
+
+      const subFilterShow = !subFilter || (() => {
+        if (subFilter == 'upgrade') {  
+          return cardStore.types.match(/(upgrade|relic)/i);
+        } 
+        if (subFilter == 'character') {
+          return cardStore.types.match(/(character|summon)/i);
+        }
+      })();
+
+      const specifiedFiltersShow = !!specifiedFilters && (() => {
+        return Object.keys(specifiedFilters)
+          .reduce((shouldHide, key) => {
+            const keyValue = specifiedFilters[key];
+
+            if (key == "upgradeType") {
+              if (cardStore.types == "relic") return shouldHide;
+
+              // do some fucky
+              // separate out these upgradeTypes
+              const upgradeTypes = keyValue.split(" ");
+
+              // check if the cardStore has a type matching
+              const cardStoreTypes = cardStore.types.split(" ");
+
+              const foundType = cardStoreTypes.find(type => upgradeTypes.includes(type));
+
+              return !foundType || shouldHide;
+            } else if (key == "classes") {
+              if (cardStore.classes == "") return shouldHide;
+
+              const filterClasses = keyValue.split(" ");
+              const cardStoreClasses = cardStore.classes.split(" ");
+
+              const foundClass = cardStoreClasses.find(cls => filterClasses.includes(cls));
+
+              return !foundClass || shouldHide;
+            }
+
+            return shouldHide;
+          }, false);
+      })();
+
+      cardEle.classList.toggle('inactive', (!allFalse && !filterShow) || !searchShow || !subFilterShow || specifiedFiltersShow);
+    }
+  }
+
+  const addCardToDatabase = async (image, uid) => {
+    const transaction = database.transaction('cards', 'readwrite');
+
+    try {
+      const objectStore = transaction.objectStore('cards');
+      const storeId = await objectStore.add({uid, image});
+
+      const result = await objectStore.get(storeId);
+
+      loadCard(result);
+      
+      return true;
+    } catch(err) {
+      console.error(err);
+      return false;
+    }
+  };
+/* #END FILTER */
+
+/* #REGION CAROUSEL SCRIPTS */
+  const carouselEle = document.querySelector("cardCarousel");
+  const carouselCanvasEle = document.querySelector('cardCarousel canvas');
+
+  const updateCarousel = () => {
+    // rerender the whole thing with index being the selected element, so render that one last.
+    if (!cardLibraryListEle.clientWidth) return;
+
+    const scrollPadding = cardScrollerEle.clientWidth * 0.5;
+    const scrollScalar = (cardScrollerEle.scrollLeft) / (cardLibraryListEle.clientWidth - scrollPadding * 2);
+
+    const libraryCardEles = [...cardLibraryListEle.children].filter(e => !e.classList.contains('inactive'));
+    const count = libraryCardEles.length;
+
+    const cardDrawWidth = (CARD_WIDTH / CARD_HEIGHT) * carouselCanvasEle.height;
+    const drawWidth = carouselCanvasEle.width - cardDrawWidth;
+    const drawOffsetX = cardDrawWidth * 0.5;
+
+    // 1, center - 3
+    // 2, 25%, 75% - 4
+    // 3, 25%, 50%, 75% - 5
+    const intervalWidth = drawWidth / (count + 1);
+
+    const context = carouselCanvasEle.getContext('2d');
+    // black out the carousel
+    context.clearRect(0, 0, carouselCanvasEle.width, carouselCanvasEle.height);
+    
+    context.strokeStyle = `#2b8c9abb`;
+    context.lineWidth = count > 50 ? 1 : 2;
+
+    const linePaddin = 4;
+
+    // render lines at each width;
+    for (var i = 0; i < count; i++) {
+      const x = drawOffsetX + intervalWidth * (i + 1);
+
+      context.beginPath();
+      context.moveTo(x, linePaddin);
+      context.lineTo(x, carouselCanvasEle.height - linePaddin);
+      context.stroke();
+    }
+
+    const viewWidth = drawWidth - intervalWidth;
+    const viewX = drawOffsetX + viewWidth * scrollScalar - cardDrawWidth * 0.5 + intervalWidth * 0.5;
+
+    // current scroll 
+    context.strokeStyle = `#58d5e6`;
+    context.fillStyle = "#2b8c9abb";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.rect(viewX, 0, cardDrawWidth, carouselCanvasEle.height - 2);
+    context.fill();
+    context.stroke();
+  }
+
+  const applyCarousel = () => {
+    // get the filtered card count
+    const containerRect = carouselEle.getBoundingClientRect();
+
+    carouselCanvasEle.width = containerRect.width - 32;
+    carouselCanvasEle.height = containerRect.height - 6;
+
+    updateCarousel();
+  }
+/* #END CAROUSEL */
+
 // initialize the database.
 const init = async () => {
   // constantly measure the scrolling
+  document.addEventListener("contextmenu", (event) => {
+    console.log('contextmenu');
+    event.preventDefault();
+    return false; 
+  });
 
+  document.body.setAttribute("data-long-press-delay", 150);
+  document.body.addEventListener("long-press", (event) => {
+    console.log('long-press');
+    event.preventDefault();
+    awaitFrame().then(() => {
+      document.body.click();
+    });
+    return false;
+  });
 
-  const updateAppSize = () => {
+  const updateAppSize = async (event) => {
+    // check if it's landscape or portrait
+    const isLandscape = window.innerWidth > window.innerHeight;
+
+    if (isLandscape) {
+      await Capacitor.Plugins.StatusBar.hide();
+      await Capacitor.Plugins.NavigationBar.hide();
+    } else {
+      await Capacitor.Plugins.StatusBar.show();
+      await Capacitor.Plugins.NavigationBar.show();
+    }
+
+    await awaitFrame();
+
     const doc = document.documentElement;
-    doc.style.setProperty('--screen-height', `${window.innerHeight}px`);
-    doc.style.setProperty('--screen-width', `${window.innerWidth}px`);
 
-    window?.plugins?.safearea?.get(
-      (result) => {
-        // elegantly set the result somewhere in app state
-        doc.style.setProperty('--safe-area-top', `${result.top}px`);
-        doc.style.setProperty('--safe-area-bottom', `${result.bottom}px`);
+    const currentScreenWidth = doc.style.getPropertyValue('--screen-width');
 
-        doc.style.setProperty('--screen-height', `${window.innerHeight - result.top - result.bottom}px`);
-      },
-      (error) => {
-        // maybe set some sensible fallbacks?
+    try {
+      var {insets} = await Capacitor.Plugins.SafeArea.getSafeAreaInsets();
+    } finally {
+      if (!insets) {
+        doc.style.setProperty('--safe-area-top', `0px`);
+        doc.style.setProperty('--safe-area-bottom', `0px`);
+
+        doc.style.setProperty('--screen-height', `${window.screen.height}px`);
+        doc.style.setProperty('--screen-width', `${window.screen.width}px`);
+    
+        doc.style.setProperty('--screen-width-raw', `${window.screen.width}`);
+        
+        return;
       }
-    );
+    }
+    
+    if (window.innerWidth > window.innerHeight) {
+      doc.style.setProperty('--safe-area-top', `0px`);
+      doc.style.setProperty('--safe-area-bottom', `0px`);
+
+      doc.style.setProperty('--screen-height', `${window.screen.height}px`);
+      doc.style.setProperty('--screen-width', `${window.screen.width}px`);
+  
+      doc.style.setProperty('--screen-width-raw', `${window.screen.width}`);
+      return;
+    }
+
+    console.log(`safe area`, JSON.stringify(insets));
+    const safeTop = insets.top ?? 0;
+    const safeBottom = insets.bottom ?? 0;
+
+    // elegantly set the result somewhere in app state
+    doc.style.setProperty('--safe-area-top', `${safeTop}px`);
+    doc.style.setProperty('--safe-area-bottom', `${safeBottom}px`);
+
+    doc.style.setProperty('--screen-width', `${window.screen.width}px`);
+    doc.style.setProperty('--screen-height', `${window.screen.height - safeTop - safeBottom}px`);
+
+    console.log(`sw: ${currentScreenWidth}`);
   }
-  document.addEventListener("resume", updateAppSize);
-  window.addEventListener('resize', updateAppSize)
+  const triggerReload = async () => {
+    console.log('assessing reload?')
+    // check to see if the dimensions have changed
+    const doc = document.documentElement;
+    const currentScreenWidth = doc.style.getPropertyValue('--screen-width');
+    console.log(`sw: ${currentScreenWidth} vs ${window.innerWidth}px`);
+
+    if (currentScreenWidth == `${window.innerWidth}px`) return;
+
+    // check if we're loading
+    while (document.body.className == 'loading') {
+      await awaitFrame();
+    }
+
+    await awaitFrame();
+    window.location.reload();
+  };
+  document.addEventListener("resume", triggerReload);
+  window.addEventListener('resize', triggerReload)
   updateAppSize()
 
   database = await idb.openDB('relicbladeCards', 3, {
@@ -637,7 +1204,20 @@ const init = async () => {
 
       // accept a pdf
       try {
+        let pickedFile = false;
+
+        awaitTime(2000).then(() => {
+          if (pickedFile) return;
+
+          document.body.className = '';
+        });
+
         const [fileHandle] = await window.showOpenFilePicker({types: [{accept: {'application/pdf': ['.pdf']}}]});
+        if (fileHandle) {
+          pickedFile = true;
+          document.body.className = 'loading';
+        }
+
         const file = await fileHandle.getFile();
 
         const reader = new FileReader();
@@ -1076,7 +1656,8 @@ const init = async () => {
     // do the next crap.
   });
 
-  cardScrollerEle.addEventListener("contextmenu", async (event) => {
+  cardScrollerEle.setAttribute("data-long-press-delay", 400);
+  cardScrollerEle.addEventListener("long-press", async (event) => {
     event.preventDefault();
     // ignore if vertical
     if (window.innerHeight > window.innerWidth) return;
@@ -1329,6 +1910,12 @@ const init = async () => {
     loadDeckFromLocal();
     // hide the menu
     overlayMenuEle.classList.add("hidden");
+
+    // show deck
+    showDeckButton.click();
+
+    // scroll to the front
+    scrollScroller(0);
 
     showToast(`Deck, ${deckName || "Untitled Deck"} loaded!`);
   };
