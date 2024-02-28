@@ -201,6 +201,10 @@ import {
   filter: saturate(0.6);
 }
 
+import[uid="addFromPicture"] {
+  background-image: url('./assets/camera.png');
+}
+
 purchase[uid="visitRelicblade"] {
   background-color: #000000;
   background-image: url('./assets/cardpacks/Metal-King.png');
@@ -784,7 +788,7 @@ cardbutton.attachUpgrade {
   grid-column: 3;
 }
 
-label.fileUpload {
+label.fileUpload, label.imageUpload {
   pointer-events: all;
   top: 0px;
   bottom: 0px;
@@ -1019,4 +1023,17 @@ modalbuttons {
 modalbutton#modalReturn {
   grid-column: 2;
   background-image: url(./assets/add-remove-flipped.png);
+}
+
+
+preview {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    width: var(--card-width);
+    height: var(--card-height);
+    transform: translate(-50%, 0);
+    background-size: contain;
+    opacity: 0;
+    transition: opacity 0.4s;
 }

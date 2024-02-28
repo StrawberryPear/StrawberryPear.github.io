@@ -31,6 +31,8 @@ const searchInputEles = document.querySelectorAll('searchContainer input');
 const searchInputClearEle = document.querySelector('searchContainer searchicon[type="clear"]');
 const gridButtonEle = document.querySelector('.grid');
 
+const previewEle = document.querySelector('preview');
+
 const removeFromDeckButtons = document.querySelectorAll("cardButton.removeFromDeck");
 const showLibraryButton = document.querySelector("cardButton.showLibrary");
 const searchButton = document.querySelector("cardButton.search");
@@ -141,7 +143,12 @@ const modalOverlayEle = document.querySelector("modalOverlay");
 const modalOverlayTextEle = modalOverlayEle.querySelector("modalText");
 const modalOverlayReturnButtonEle = modalOverlayEle.querySelector("modalButton#modalReturn");
 const modalOverlayAcceptButtonEle = modalOverlayEle.querySelector("modalButton#modalAccept");
+const reinitializeModal = ({acceptText, returnText} = {}) => {
+  modalOverlayAcceptButtonEle.innerHTML = acceptText || "Accept";
+  modalOverlayReturnButtonEle.innerHTML = returnText || "Return";
+};
 const showConfirm = async (content) => {
+  reinitializeModal();
   // hide the background 
   modalOverlayEle.classList.remove("hidden");
 
@@ -169,7 +176,8 @@ const showConfirm = async (content) => {
 
   return returnValue;
 };
-const showInput = async (content) => {
+const showInput = async (content, options = {}) => {
+  reinitializeModal(options);
   // hide the background 
   modalOverlayEle.classList.remove("hidden");
 
@@ -191,6 +199,21 @@ const showInput = async (content) => {
   });
 
   modalOverlayTextEle.append(input);
+
+  if (options.dataList) {
+    const datalistEle = document.createElement("datalist");
+    datalistEle.id = "modalDatalist";
+
+    for (const data of options.dataList) {
+      const optionEle = document.createElement("option");
+      optionEle.value = data;
+
+      datalistEle.append(optionEle);
+    }
+
+    input.setAttribute("list", "modalDatalist");
+    modalOverlayTextEle.append(datalistEle);
+  }
 
   input.focus();
 
@@ -216,6 +239,7 @@ const showInput = async (content) => {
   return returnValue;
 };
 const showOption = async (content, options) => {
+  reinitializeModal(options);
   // hide the background 
   modalOverlayEle.classList.remove("hidden");
   modalOverlayEle.classList.add("option");
@@ -762,9 +786,9 @@ const loadDeckFromLocal = () => {
 
       if (image.length < 8064) continue;
 
-      await addCardToDatabase(image, `${title} - ${cardsLoaded}`);
+      const cardAdded = await addCardToDatabase(image, `${title} - ${cardsLoaded}`);
     
-      cardsLoaded++;
+      if (cardAdded) cardsLoaded++;
     }
     
     showToast(`${cardsLoaded} cards added to library`);
@@ -966,6 +990,58 @@ const loadDeckFromLocal = () => {
   }
 
   const addCardToDatabase = async (image, uid) => {
+    // check if the card uid is in the card store
+    if (!cardsStore[uid]) {
+      // alert the user that the card is not in the store.
+      // open up a resolver modal
+
+      const cardStoreNames = Object.keys(cardsStore)
+        .filter(key => !cardsStore[key].types.match(/purchase/i))
+        .filter(key => cardsStore[key].name != 'delete')
+        .map(key => cardsStore[key].name)
+        .sort();
+
+      // show the card on the screen.6
+      previewEle.style.setProperty('background-image', `url('${image}')`);
+      previewEle.style.setProperty('opacity', `1`);
+
+      const cardStoreName = await showInput(`Card could not be automatically resolved, please enter the card name`, {
+        dataList: cardStoreNames,
+        acceptText: "Add Card",
+        returnText: "Skip Card"
+      });
+
+      if (!cardStoreName) {
+        previewEle.style.setProperty('opacity', `0`);
+        await awaitTime(400);
+        previewEle.style.setProperty('background-image', `none`);
+        await awaitTime(400);
+        return false;
+      }
+      // check if it's a custom card.
+      const cardStoreKey = Object.keys(cardsStore).find(key => cardsStore[key].name == cardStoreName);
+
+      if (!cardStoreKey) {
+        showToast(`Card not found, custom cards not supported yet.`);
+        await awaitTime(500);
+        previewEle.style.setProperty('opacity', `0`);
+        await awaitTime(1000);
+        previewEle.style.setProperty('background-image', `none`);
+        return false;
+      }
+      showToast(`Adding ${cardStoreName}`);
+      
+      await awaitTime(1000);
+      previewEle.style.setProperty('opacity', `0`);
+      await awaitTime(1000);
+      previewEle.style.setProperty('background-image', `none`);
+
+      // hide the preview
+      
+      // update the uid.
+      uid = Object.keys(cardsStore).find(key => cardsStore[key].name == cardStoreName.toLowerCase());
+    }
+
     const transaction = database.transaction('cards', 'readwrite');
 
     try {
@@ -1073,12 +1149,17 @@ const init = async () => {
     // check if it's landscape or portrait
     const isLandscape = window.innerWidth > window.innerHeight;
 
-    if (isLandscape) {
-      await Capacitor.Plugins.StatusBar.hide();
-      await Capacitor.Plugins.NavigationBar.hide();
-    } else {
-      await Capacitor.Plugins.StatusBar.show();
-      await Capacitor.Plugins.NavigationBar.show();
+    try {
+      if (isLandscape) {
+        await Capacitor.Plugins.StatusBar.hide();
+        await Capacitor.Plugins.NavigationBar.hide();
+      } else {
+        await Capacitor.Plugins.StatusBar.show();
+        await Capacitor.Plugins.NavigationBar.show();
+      }
+    }
+    catch (e) {
+      console.error("Capacitor failed to initialize", e);
     }
 
     await awaitFrame();
