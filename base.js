@@ -1278,6 +1278,12 @@ const init = async () => {
   applyCarousel();
   document.body.className = '';
 
+  [...document.querySelectorAll('label.imageUpload')].map((ele) => {
+    ele.addEventListener('click', async (event) => {
+      console.log("HELLO!");
+    });
+  });
+
   [...document.querySelectorAll('label.fileUpload')].map((ele) => {
     ele.addEventListener('click', async (event) => {
       document.body.className = 'loading';
@@ -1854,7 +1860,6 @@ const init = async () => {
       }
 
       // do the weird cards
-      
       switch (clickedCardEle.tagName) {
         case "PURCHASE":
           try {
