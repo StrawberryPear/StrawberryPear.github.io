@@ -1026,7 +1026,7 @@ modalbutton#modalReturn {
 }
 
 
-preview {
+preview, cropper {
     position: absolute;
     top: 64px;
     left: 50%;
@@ -1034,6 +1034,16 @@ preview {
     height: var(--card-height);
     transform: translate(-50%, 0);
     background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     opacity: 0;
     transition: opacity 0.4s;
+    z-index: 10000;
+}
+
+cropper > img {
+  height: 0px;
+  height: 0px;
+  display: block;
+  max-width: 100%;
 }

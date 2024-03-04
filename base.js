@@ -32,6 +32,7 @@ const searchInputClearEle = document.querySelector('searchContainer searchicon[t
 const gridButtonEle = document.querySelector('.grid');
 
 const previewEle = document.querySelector('preview');
+const cropperEle = document.querySelector('cropper');
 
 const removeFromDeckButtons = document.querySelectorAll("cardButton.removeFromDeck");
 const showLibraryButton = document.querySelector("cardButton.showLibrary");
@@ -147,8 +148,8 @@ const reinitializeModal = ({acceptText, returnText} = {}) => {
   modalOverlayAcceptButtonEle.innerHTML = acceptText || "Accept";
   modalOverlayReturnButtonEle.innerHTML = returnText || "Return";
 };
-const showConfirm = async (content) => {
-  reinitializeModal();
+const showConfirm = async (content, options = {}) => {
+  reinitializeModal(options);
   // hide the background 
   modalOverlayEle.classList.remove("hidden");
 
@@ -360,9 +361,8 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
   const defaultContainerOffsetY = Math.min(1, rangeScalar) * -defaultCardHeight;
 
   for (const upgradeCardIndex in upgradeCardEles) {
-    const cardHeight = containerCardEle.clientHeight;
-    const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * cardHeight;
-    const containerOffsetY = Math.min(1, rangeScalar) * -cardHeight;
+    const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * defaultCardHeight;
+    const containerOffsetY = Math.min(1, rangeScalar) * -defaultCardHeight;
 
     const upgradeCardEle = upgradeCardEles[upgradeCardIndex];
 
@@ -370,7 +370,7 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
     const upgradeScalar = Math.max(-0, Math.min(1, rangeScalar - (parseInt(upgradeCardIndex) + 1)));
 
     const minPoint = 0;
-    const maxPoint = cardHeight;
+    const maxPoint = defaultCardHeight;
 
     const range = maxPoint - minPoint;
     const rangeValue = range * upgradeScalar;
@@ -1280,7 +1280,75 @@ const init = async () => {
 
   [...document.querySelectorAll('label.imageUpload')].map((ele) => {
     ele.addEventListener('click', async (event) => {
-      console.log("HELLO!");
+      document.body.className = 'loading';
+      overlayMenuEle.className = 'hidden';
+
+      // accept a pdf
+      try {
+        let pickedFile = false;
+
+        awaitTime(2000).then(() => {
+          if (pickedFile) return;
+
+          document.body.className = '';
+        });
+
+        const [fileHandle] = await window.showOpenFilePicker({
+          types: [
+            {accept: {'image/*': ['.png', '.jpeg', '.jpg']}}
+          ]
+        });
+        if (fileHandle) {
+          pickedFile = true;
+          document.body.className = 'loading';
+        }
+
+        const file = await fileHandle.getFile();
+
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          try {
+            // start the clipper
+            const imageDom = document.getElementById('cropper');
+      
+            imageDom.src = reader.result;
+
+            cropperEle.style.setProperty('opacity', 1);
+
+            const cropper = new Cropper(imageDom, {
+              viewMode: 1,
+              guides: false,
+              crop(event) {
+              },
+            });
+
+            const confirmValue = await showConfirm("Crop the image to the correct size and press confirm", {
+              acceptText: "Add Card",
+              returnText: "Cancel"
+            });
+
+            const cropperUrl = cropper.getCroppedCanvas().toDataURL();
+
+            cropper.destroy();
+            cropperEle.style.setProperty('opacity', 0);
+
+            if (!confirmValue) {
+              return;
+            }
+
+            await addCardToDatabase(cropperUrl, '');
+
+            applyFilters();
+            applyCarousel();
+          } finally {
+            document.body.className = '';
+          }
+        }
+        reader.readAsDataURL(file)
+      } catch (err) {
+        console.log(err);
+        document.body.className = '';
+      }
     });
   });
 
