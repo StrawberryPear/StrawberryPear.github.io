@@ -1044,7 +1044,7 @@ const loadDeckFromLocal = () => {
         return false;
       }
       // check if it's a custom card.
-      const cardStoreKey = Object.keys(cardsStore).find(key => cardsStore[key].name == cardStoreName);
+      const cardStoreKey = Object.keys(cardsStore).find(key => cardsStore[key].name.toLowerCase() == cardStoreName.toLowerCase());
 
       if (!cardStoreKey) {
         showToast(`Card not found, custom cards not supported yet.`);
@@ -1064,7 +1064,8 @@ const loadDeckFromLocal = () => {
       // hide the preview
       
       // update the uid.
-      uid = Object.keys(cardsStore).find(key => cardsStore[key].name == cardStoreName.toLowerCase());
+      debugger
+      uid = Object.keys(cardsStore).find(key => cardsStore[key].name.toLowerCase() == cardStoreName.toLowerCase());
     }
 
     const transaction = database.transaction('cards', 'readwrite');
@@ -1995,22 +1996,18 @@ const init = async () => {
   
       return;
     }
-  
-    if (document.body.getAttribute("displayType") != "deck") return;
-  
-    
     
     // get the xy of where was clicked
     // get card bounds
-    // const cardBounds = currentCardEle.getBoundingClientRect();
+    // const cardBounds = clickedCardEle.getBoundingClientRect();
   
-    // const markBoxX = (e.clientX - cardBounds.left) / cardBounds.width;
-    // const markBoxY = (e.clientY - cardBounds.top) / cardBounds.height;
+    // const markBoxX = (event.clientX - cardBounds.left) / cardBounds.width;
+    // const markBoxY = (event.clientY - cardBounds.top) / cardBounds.height;
   
     // cardStore.markBoxes = cardStore.markBoxes || [];
     // cardStore.markBoxes.push([markBoxX, markBoxY, 0]);
   
-    // console.log(`box marked: ${markBoxX}, ${markBoxY}`);
+    // console.log(`[${markBoxX}, ${markBoxY}, 0], `);
   });
 
   const onCarouselInteraction = event => {
