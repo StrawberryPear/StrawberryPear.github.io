@@ -50,7 +50,7 @@
   --height-based-card-width: calc((var(--screen-height) - 252px) / var(--card-ratio));
   --width-based-card-width: calc(var(--screen-width) * 0.98);
 
-  --card-width: min(var(--height-based-card-width), var(--width-based-card-width));
+  --card-width: min(var(--height-based-card-width)  * 0.8, var(--width-based-card-width));
   --card-height: calc(var(--card-width) * var(--card-ratio) * 1.025);
     
   --card-width-deck: var(--card-width);

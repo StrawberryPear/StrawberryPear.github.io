@@ -63,6 +63,8 @@ const getSId = (() => {
   }
 })();
 
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
 const awaitFrame = () => new Promise(resolve => {
   window.requestAnimationFrame(resolve);
 });
@@ -321,7 +323,7 @@ const awaitScrollStop = async () => {
 };
 
 const getDeckUpgradeRangeScalar = (containerCardEle, _scrollY) => {
-  const scrollY = _scrollY * -1.3;
+  const scrollY = _scrollY * 1.4;
   // work out how many cards are there to stack
   const upgradeCardEles = [...containerCardEle.children].filter(ele => ele.tagName == "CARD");
 
@@ -340,6 +342,7 @@ const getDeckUpgradeRangeScalar = (containerCardEle, _scrollY) => {
 // then after that hits the bottom, the next card starts to go towards the bototm
 // so everything needs to raise till the container hits the bottom.
 const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true) => {
+  // adjust the range scalar
   if (!containerCardEle) return;
 
   if (setScalar) {
@@ -356,35 +359,57 @@ const applyDeckCardTopScroll = (containerCardEle, rangeScalar, setScalar = true)
     return;
   }
 
-  const defaultCardHeight = containerCardEle.clientHeight;
-  const defaultRangeCardOffsetY = (0.175 / upgradeCardEles.length) * defaultCardHeight;
-  const defaultContainerOffsetY = Math.min(1, rangeScalar) * -defaultCardHeight;
+  // lets try something new.
+  const cardList = [...upgradeCardEles];
 
-  for (const upgradeCardIndex in upgradeCardEles) {
-    const rangeCardOffsetY = (0.175 / upgradeCardEles.length) * defaultCardHeight;
-    const containerOffsetY = Math.min(1, rangeScalar) * -defaultCardHeight;
+  // the offset should be an set y offset for each, no scaling
+  const cardHeight = containerCardEle.clientHeight;
+  const cardOffset = 0.175 * cardHeight;
 
-    const upgradeCardEle = upgradeCardEles[upgradeCardIndex];
+  const containerMajorOffset = Math.min(1, rangeScalar);
+  const containerMinorOffset = Math.max(rangeScalar - 1, 0);
 
-    const offsetCardOffsetY = rangeCardOffsetY * (parseInt(upgradeCardIndex) + 1);
-    const upgradeScalar = Math.max(-0, Math.min(1, rangeScalar - (parseInt(upgradeCardIndex) + 1)));
+  const adjustUp = clamp(cardList.length - rangeScalar, 0, 2) * cardOffset * 0.65;
 
-    const minPoint = 0;
-    const maxPoint = defaultCardHeight;
+  const containerOffsetPx = containerMajorOffset * -cardHeight + containerMinorOffset * -cardOffset - adjustUp;
 
-    const range = maxPoint - minPoint;
-    const rangeValue = range * upgradeScalar;
+  containerCardEle.style.setProperty("transform", `translateY(${containerOffsetPx}px)`);
 
-    const scrollDown = containerOffsetY + rangeValue - Math.max(containerOffsetY - offsetCardOffsetY, offsetCardOffsetY);
+  // the first card is different, lets treat it as different.
 
-    upgradeCardEle.style.setProperty("transform", `translateY(${scrollDown}px) translateZ(-${upgradeCardIndex + 1}px)`);
+  rangeScalar = Math.max(0, rangeScalar);
+
+  const focusedCardIndex = (rangeScalar - 1);
+
+  for (const cardEle of cardList) {
+    const cardIndex = cardList.indexOf(cardEle);
+    const beforeFocusedOffsetPx = cardOffset * (parseInt(cardIndex) + 1);
+
+    const indexOffset = cardIndex - focusedCardIndex;
+
+    // if the index is greater than 1 or less than -1, it shouldn't be animating toward anything
+    // 0 is the focused card, as the focused card goes toward 1, it moves down, and the card above moves down too
+
+    // if we're at the focused card index, we should be just below the top
+    const focusedOffsetPx = clamp(rangeScalar, 0, 1) * cardHeight + cardOffset * focusedCardIndex;
+    
+    const afterFocusedOffsetPx = focusedOffsetPx + cardOffset * (indexOffset + (1 - clamp(rangeScalar, 0, 1)));
+    
+    const beforeDiffPx = beforeFocusedOffsetPx - focusedOffsetPx;
+    const afterDiffPx = afterFocusedOffsetPx - focusedOffsetPx;
+
+    if (indexOffset < 0) {
+      const positionPx = focusedOffsetPx + beforeDiffPx * clamp(-indexOffset, 0, 1);
+      
+      cardEle.style.setProperty("transform", `translateY(${positionPx}px) translateZ(-${cardIndex + 1}px)`);
+      continue;
+    } else {
+      const positionPx = focusedOffsetPx + afterDiffPx * clamp(indexOffset, 0, 1);
+
+      cardEle.style.setProperty("transform", `translateY(${positionPx}px) translateZ(-${cardIndex + 1}px)`);
+      continue;
+    }
   }
-
-  // slowly move the container down
-  const range = defaultRangeCardOffsetY * rangeScalar * 0.5;
-
-  containerCardEle.style.setProperty("transform", `translateY(${-defaultContainerOffsetY + range}px)`);
-  // find the snap point stuff
 }
 
 const addCharacterToDeck = (data, updateDeckStore = true) => {
@@ -1549,6 +1574,8 @@ const init = async () => {
 
   removeFromDeckButtons.forEach(removeForDeckButton => {
     removeForDeckButton.addEventListener('click', async () => {
+      // check if there's a selected card
+      const selectedCardEle = document.querySelector('card.highlight');
       const currentCardEle = getCenterCardEle();
 
       if (!currentCardEle) {
@@ -1563,7 +1590,9 @@ const init = async () => {
         return;
       };
 
-      const currentFocusSubIndex = currentCardEle.currentRangeScalar || 0;
+      const currentFocusSubIndex = selectedCardEle 
+        ? [...currentCardEle.querySelectorAll("card")].indexOf(selectedCardEle) + 1
+        : currentCardEle.currentRangeScalar || 0;
 
       if (!currentFocusSubIndex) {
         const confirmValue = await showConfirm('Are you sure you want to remove this card, and all it\'s upgrades from this deck?');
@@ -1837,19 +1866,21 @@ const init = async () => {
       const scrollLeft = currentFocusCardEle.closest("cardDeckWrapper").offsetLeft;
       scrollScroller(scrollLeft - window.innerWidth * 0.5);
 
+      const currentFocusCard = cardsStore[currentFocusCardEle.getAttribute("uid")];
+
       // show a modal with add upgrade, remove, cancel
-      const optionResult = await showOption("", ["Add Upgrade", "Remove"]);
+      const optionResult = await showOption(`<h4>${currentFocusCard.name} selected</h4> `, ["Add Upgrade", "Remove"]);
 
-      selectedCardEle.classList.toggle("highlight", false);
-
-      await awaitTime(200);
-      
       if (optionResult == "Add Upgrade") {
         addUpgradeButtons[0].click();
       } else if (optionResult == "Remove") {
         removeFromDeckButtons[0].click();
       }
 
+      selectedCardEle.classList.toggle("highlight", false);
+
+      await awaitTime(200);
+      
       return;
     }
 
