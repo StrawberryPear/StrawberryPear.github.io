@@ -41,13 +41,13 @@ const addUpgradeButtons = document.querySelectorAll("cardButton.addUpgrade");
 const showDeckButton = document.querySelector("cardButton.showDeck");
 const addToDeckButtons = document.querySelectorAll("cardButton.addToDeck");
 const addCharacterButton = document.querySelector("add");
-const randomRelicButton = document.querySelector("random");
 const attachUpgradeButton = document.querySelector("cardButton.attachUpgrade");
+const randomRelicButton = document.querySelector("cardButton.randomRelic");
 
 const deckTitleInput = document.querySelector("input#title");
 const deckTitleInputMirror = document.querySelector("deckTitleMirror#titleMirror");
 
-const removeLibraryCardEle = document.querySelector('menuControl.removeLibraryCard');
+const removeLibraryCardEle = document.querySelector('.removeLibraryCard');
 const returnEle = document.querySelector('menuControl.return');
 const saveReturnEle = document.querySelector('menuControl.saveReturn');
 const newDeckEle = document.querySelector('menuControl.newDeck');
@@ -63,7 +63,35 @@ const getSId = (() => {
   }
 })();
 
+let hasRelicInLibrary = false;
+
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const getDataImageDimensions = (dataURL) => {
+  const image = new Image();
+  image.src = dataURL;
+
+  return new Promise((resolve, reject) => {
+    image.onload = () => {
+      resolve([image.width, image.height]);
+    }
+  });
+}
+
+const resizeDataImage = (dataURL, width, height) => {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const image = new Image();
+  image.src = dataURL;
+
+  context.drawImage(image, 0, 0, width, height);
+
+  return canvas.toDataURL('image/jpeg', 0.94);
+};
 
 const awaitFrame = () => new Promise(resolve => {
   window.requestAnimationFrame(resolve);
@@ -820,10 +848,19 @@ const loadDeckFromLocal = () => {
   };
 
   const loadCard = (card) => {
+    if (!card) return;
+
     const cardEle = document.createElement('card');
 
     cardEle.setAttribute('uid', card.uid);
     cardEle.setAttribute('index', card.index);
+
+    const cardStoreData = cardsStore[card.uid];
+
+    // check the card type is a relic
+    if (cardStoreData?.types?.match(/relic/i)) {
+      hasRelicInLibrary = true;
+    }
 
     // const cardStore = cardsStore[]
     // if (card. == "DELETE"
@@ -1064,7 +1101,6 @@ const loadDeckFromLocal = () => {
       // hide the preview
       
       // update the uid.
-      debugger
       uid = Object.keys(cardsStore).find(key => cardsStore[key].name.toLowerCase() == cardStoreName.toLowerCase());
     }
 
@@ -1253,7 +1289,13 @@ const init = async () => {
   };
   document.addEventListener("resume", triggerReload);
   window.addEventListener('resize', triggerReload)
-  updateAppSize()
+  updateAppSize();
+
+  await awaitFrame();
+  await awaitFrame();
+  await awaitFrame();
+  await awaitFrame();
+  await awaitFrame();
 
   database = await idb.openDB('relicbladeCards', 3, {
     upgrade: (db, oldVersion) => {
@@ -1337,7 +1379,22 @@ const init = async () => {
             // start the clipper
             const imageDom = document.getElementById('cropper');
       
-            imageDom.src = reader.result;
+            // get the reader image size.
+            const [imageWidth, imageHeight] = await getDataImageDimensions(reader.result);
+
+            // get an image with a dimension of the above.
+
+            const MAX_IMAGE_WIDTH = 2048;
+            const dimension = imageWidth / imageHeight;
+
+            const newWidth = Math.min(MAX_IMAGE_WIDTH, imageWidth);
+            const newHeight = parseInt(newWidth / dimension);
+
+            const smallerImageUrl = resizeDataImage(reader.result, newWidth, newHeight);
+
+            // lets crop down the reader result size
+
+            imageDom.src = smallerImageUrl;
 
             cropperEle.style.setProperty('opacity', 1);
 
@@ -1353,7 +1410,19 @@ const init = async () => {
               returnText: "Cancel"
             });
 
-            const cropperUrl = cropper.getCroppedCanvas().toDataURL();
+            const cropperCanvas = cropper.getCroppedCanvas();
+            const cropperUrl = cropperCanvas.toDataURL();
+
+            const tempCanvas = document.createElement('canvas');
+            const tempContext = tempCanvas.getContext('2d');
+
+            tempCanvas.width = CARD_WIDTH * 4;
+            tempCanvas.height = CARD_HEIGHT * 4;
+
+            tempContext.drawImage(cropperCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // get the tempCanvasUri
+            const tempUrl = tempCanvas.toDataURL('image/jpeg', 0.94);
 
             cropper.destroy();
             cropperEle.style.setProperty('opacity', 0);
@@ -1362,7 +1431,7 @@ const init = async () => {
               return;
             }
 
-            await addCardToDatabase(cropperUrl, '');
+            await addCardToDatabase(tempUrl, '');
 
             applyFilters();
             applyCarousel();
@@ -1548,11 +1617,19 @@ const init = async () => {
       return cardStore && cardStore.types.match(/relic/i);
     });
 
-    const randomRelicEle = relicEles[Math.floor(Math.random() * relicEles.length)];
+    // get the attach character
+    const selectedCardEle = document.querySelector('card.highlight');
+    if (!selectedCardEle) return;
 
+    const randomRelicEle = relicEles[Math.floor(Math.random() * relicEles.length)];
     if (!randomRelicEle) return;
 
-    const cardEleClone = addCharacterToDeck({uid: randomRelicEle.getAttribute("uid")});
+    const upgradeUId = randomRelicEle.getAttribute("uid");
+
+    const currentCardIndex = [...cardDeckListEle.children].indexOf(selectedCardEle.parentElement);
+    const deckAttachCharacter = deck[currentCardIndex];
+
+    const cardEleClone = addUpgradeToCharacter(upgradeUId, selectedCardEle, deckAttachCharacter, true);
     if (!cardEleClone) return;
 
     updateDeck();
@@ -1560,11 +1637,11 @@ const init = async () => {
     await awaitTime(200);
 
     // scroll to the newly created card
-    const currentFocusCardEle = cardEleClone;
-    const scrollLeft = currentFocusCardEle.closest("cardDeckWrapper").offsetLeft;
-    scrollScroller(scrollLeft - window.innerWidth * 0.5);
-
     showToast(`Random Relic Added`);
+
+    // scroll to show the upgrade
+    const upgradeIndex = deckAttachCharacter.upgrades.length;
+    applyDeckCardTopScroll(selectedCardEle, upgradeIndex);
     
     // highlight the card
     cardEleClone.classList.add("highlight");
@@ -1862,6 +1939,13 @@ const init = async () => {
   
     // are we in deck mode?
     if (document.body.getAttribute("showing") == "deck") {
+      const parentCardEle = selectedCardEle.parentElement.tagName == "CARD" ? selectedCardEle.parentElement : selectedCardEle;
+
+      const deckIndex = [...cardDeckListEle.children].indexOf(parentCardEle);
+      const upgradeIndex = [...parentCardEle.querySelectorAll("card")].indexOf(selectedCardEle);
+
+      applyDeckCardTopScroll(parentCardEle, upgradeIndex + 1);
+
       // center the card
       const currentFocusCardEle = selectedCardEle;
       const scrollLeft = currentFocusCardEle.closest("cardDeckWrapper").offsetLeft;
@@ -1870,12 +1954,31 @@ const init = async () => {
       const currentFocusCard = cardsStore[currentFocusCardEle.getAttribute("uid")];
 
       // show a modal with add upgrade, remove, cancel
-      const optionResult = await showOption(`<h4>${currentFocusCard.name} selected</h4> `, ["Add Upgrade", "Remove"]);
+      const options = [];
+
+      // check if we're selecting a character
+      if (currentFocusCard.types == "character") {
+        options.push("Add Upgrade");
+        options.push("Remove Character");
+        
+        // check if we have a relic in our library
+        if (hasRelicInLibrary) {
+          options.push("Add Random Relic");
+        }
+      }
+      else {
+        options.push("Remove Upgrade");
+      }
+
+
+      const optionResult = await showOption(`<h4>${currentFocusCard.name} selected</h4> `, options);
 
       if (optionResult == "Add Upgrade") {
         addUpgradeButtons[0].click();
-      } else if (optionResult == "Remove") {
+      } else if (optionResult == "Remove Character" || optionResult == "Remove Upgrade") {
         removeFromDeckButtons[0].click();
+      } else if (optionResult == "Add Random Relic") {
+        randomRelicButton.click();
       }
 
       selectedCardEle.classList.toggle("highlight", false);

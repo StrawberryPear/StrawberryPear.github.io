@@ -891,6 +891,9 @@ main {
   flex-direction: column;
   flex-wrap: nowrap;
 }
+body[showing="library"] main {
+  background: #111;
+}
 
 input#title {
   overflow: hidden;
